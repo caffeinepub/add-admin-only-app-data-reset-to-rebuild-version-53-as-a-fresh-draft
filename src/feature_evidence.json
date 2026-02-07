@@ -1,0 +1,28 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-add-a-frontend-admin-only-ui-control-to-trigger-the-backend-reset-with-a-clear-destructive-confirmation-flow-and-refresh-the-ui-state-after-completion",
+      "featureTitle": "Add a frontend admin-only UI control to trigger the backend reset with a clear destructive confirmation flow, and refresh the UI state after completion.",
+      "files": [
+        "frontend/src/components/AdminResetControl.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/Dashboard.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

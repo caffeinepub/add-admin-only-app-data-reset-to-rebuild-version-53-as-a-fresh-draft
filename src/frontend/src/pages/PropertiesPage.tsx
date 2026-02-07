@@ -1,0 +1,1086 @@
+import { useState, useEffect } from 'react';
+import { useGetAllProperties, useSearchAndFilterProperties, useAddProperty, useUpdateProperty } from '../hooks/useQueries';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Textarea } from '../components/ui/textarea';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
+import { Badge } from '../components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Switch } from '../components/ui/switch';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import { Plus, Edit, Loader2, MapPin, Map as MapIcon, Layers, Upload, X, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { Category, Status, PropertyType, Configuration, Furnishing, type Property, type Coordinates, type SearchCriteria, ExternalBlob } from '../backend';
+import PropertyMap, { type MapFilters } from '../components/PropertyMap';
+import { toast } from 'sonner';
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+
+interface ImagePreview {
+  blob: ExternalBlob;
+  url: string;
+  file: File;
+}
+
+export default function PropertiesPage() {
+  const { data: allProperties = [], isLoading: allPropertiesLoading } = useGetAllProperties();
+  const addProperty = useAddProperty();
+  const updateProperty = useUpdateProperty();
+
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showMapView, setShowMapView] = useState(false);
+  const [showClustering, setShowClustering] = useState(true);
+  const [showRadiusCircles, setShowRadiusCircles] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [selectedPropertyIds, setSelectedPropertyIds] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<ImagePreview[]>([]);
+  const [uploadError, setUploadError] = useState<string>('');
+  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    city: '',
+    suburb: '',
+    area: '',
+    roadName: '',
+    price: '',
+    category: Category.resale,
+    propertyType: PropertyType.residential,
+    configuration: Configuration.bhk2,
+    furnishing: Furnishing.unfurnished,
+    status: Status.available,
+    coordinates: { lat: 19.0760, lng: 72.8777 } as Coordinates,
+  });
+
+  // Filter state for map - real-time filtering
+  const [mapFilters, setMapFilters] = useState<MapFilters>({});
+  const [useFilters, setUseFilters] = useState(false);
+
+  // Build search criteria from map filters for real-time updates
+  const searchCriteria: SearchCriteria = {
+    category: mapFilters.category,
+    propertyType: mapFilters.propertyType,
+    configuration: mapFilters.configuration,
+    furnishing: mapFilters.furnishing,
+    minPrice: mapFilters.minPrice ? BigInt(mapFilters.minPrice) : undefined,
+    maxPrice: mapFilters.maxPrice ? BigInt(mapFilters.maxPrice) : undefined,
+    status: mapFilters.status,
+    lat: mapFilters.centerLat,
+    lng: mapFilters.centerLng,
+    radius: mapFilters.radiusKm,
+    city: mapFilters.city,
+    suburb: mapFilters.suburb,
+    area: mapFilters.area,
+    roadName: mapFilters.roadName,
+  };
+
+  // Use filtered properties when filters are active - real-time query
+  const { data: filteredProperties = [], isLoading: filteredLoading } = useSearchAndFilterProperties(searchCriteria);
+  
+  // Determine which properties to display
+  const properties = useFilters ? filteredProperties : allProperties;
+  const isLoading = useFilters ? filteredLoading : allPropertiesLoading;
+
+  // Update useFilters when map filters change - real-time detection
+  useEffect(() => {
+    const hasActiveFilters = 
+      mapFilters.category !== undefined ||
+      mapFilters.propertyType !== undefined ||
+      mapFilters.configuration !== undefined ||
+      mapFilters.furnishing !== undefined ||
+      mapFilters.minPrice !== undefined ||
+      mapFilters.maxPrice !== undefined ||
+      mapFilters.status !== undefined ||
+      mapFilters.city !== undefined ||
+      mapFilters.suburb !== undefined ||
+      mapFilters.area !== undefined ||
+      mapFilters.roadName !== undefined ||
+      (mapFilters.centerLat !== undefined && mapFilters.centerLng !== undefined && mapFilters.radiusKm !== undefined);
+    
+    setUseFilters(hasActiveFilters);
+  }, [mapFilters]);
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadError('');
+    const newPreviews: ImagePreview[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // Validate file type
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        setUploadError(`File ${file.name} is not a valid image format. Only JPG and PNG are allowed.`);
+        continue;
+      }
+
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        setUploadError(`File ${file.name} exceeds the maximum size of 10 MB.`);
+        continue;
+      }
+
+      try {
+        // Read file as array buffer
+        const arrayBuffer = await file.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+
+        // Create ExternalBlob with upload progress tracking
+        const blob = ExternalBlob.fromBytes(uint8Array).withUploadProgress((percentage) => {
+          setUploadProgress(prev => ({ ...prev, [file.name]: percentage }));
+        });
+
+        // Create preview URL
+        const previewUrl = URL.createObjectURL(file);
+
+        newPreviews.push({
+          blob,
+          url: previewUrl,
+          file,
+        });
+      } catch (error) {
+        console.error('Error processing file:', error);
+        setUploadError(`Failed to process file ${file.name}`);
+      }
+    }
+
+    setImagePreviews(prev => [...prev, ...newPreviews]);
+    // Reset input
+    event.target.value = '';
+  };
+
+  const removeImagePreview = (index: number) => {
+    setImagePreviews(prev => {
+      const updated = [...prev];
+      // Revoke object URL to free memory
+      URL.revokeObjectURL(updated[index].url);
+      updated.splice(index, 1);
+      return updated;
+    });
+  };
+
+  const handleAdd = async () => {
+    try {
+      const images = imagePreviews.map(preview => preview.blob);
+      
+      await addProperty.mutateAsync({
+        title: formData.title,
+        description: formData.description,
+        location: { 
+          city: formData.city, 
+          suburb: formData.suburb, 
+          area: formData.area,
+          roadName: formData.roadName 
+        },
+        coordinates: formData.coordinates,
+        price: BigInt(formData.price),
+        category: formData.category,
+        propertyType: formData.propertyType,
+        configuration: formData.configuration,
+        furnishing: formData.furnishing,
+        images,
+      });
+      setShowAddDialog(false);
+      resetForm();
+    } catch (error) {
+      console.error('Error adding property:', error);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!selectedProperty) return;
+    try {
+      const images = imagePreviews.map(preview => preview.blob);
+      
+      await updateProperty.mutateAsync({
+        propertyId: selectedProperty.id,
+        title: formData.title,
+        description: formData.description,
+        location: { 
+          city: formData.city, 
+          suburb: formData.suburb, 
+          area: formData.area,
+          roadName: formData.roadName 
+        },
+        coordinates: formData.coordinates,
+        price: BigInt(formData.price),
+        category: formData.category,
+        propertyType: formData.propertyType,
+        configuration: formData.configuration,
+        furnishing: formData.furnishing,
+        status: formData.status,
+        images,
+      });
+      setShowEditDialog(false);
+      setSelectedProperty(null);
+      resetForm();
+    } catch (error) {
+      console.error('Error updating property:', error);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      city: '',
+      suburb: '',
+      area: '',
+      roadName: '',
+      price: '',
+      category: Category.resale,
+      propertyType: PropertyType.residential,
+      configuration: Configuration.bhk2,
+      furnishing: Furnishing.unfurnished,
+      status: Status.available,
+      coordinates: { lat: 19.0760, lng: 72.8777 },
+    });
+    // Clean up image previews
+    imagePreviews.forEach(preview => URL.revokeObjectURL(preview.url));
+    setImagePreviews([]);
+    setUploadError('');
+    setUploadProgress({});
+  };
+
+  const openEditDialog = async (property: Property) => {
+    setSelectedProperty(property);
+    setFormData({
+      title: property.title,
+      description: property.description,
+      city: property.location.city,
+      suburb: property.location.suburb,
+      area: property.location.area,
+      roadName: property.location.roadName,
+      price: property.price.toString(),
+      category: property.category,
+      propertyType: property.propertyType,
+      configuration: property.configuration,
+      furnishing: property.furnishing,
+      status: property.status,
+      coordinates: property.coordinates,
+    });
+
+    // Load existing images
+    const existingPreviews: ImagePreview[] = [];
+    for (const externalBlob of property.images) {
+      try {
+        const url = externalBlob.getDirectURL();
+        existingPreviews.push({
+          blob: externalBlob,
+          url,
+          file: new File([], 'existing-image.jpg'), // Placeholder file
+        });
+      } catch (error) {
+        console.error('Error loading existing image:', error);
+      }
+    }
+    setImagePreviews(existingPreviews);
+    setShowEditDialog(true);
+  };
+
+  const handleCoordinatesChange = (coords: Coordinates) => {
+    setFormData({ ...formData, coordinates: coords });
+  };
+
+  const handlePlaceSelected = (place: { city: string; suburb: string; area: string; roadName: string; coords: Coordinates }) => {
+    setFormData({
+      ...formData,
+      city: place.city,
+      suburb: place.suburb,
+      area: place.area,
+      roadName: place.roadName,
+      coordinates: place.coords,
+    });
+  };
+
+  const togglePropertySelection = (propertyId: string) => {
+    setSelectedPropertyIds(prev => 
+      prev.includes(propertyId) 
+        ? prev.filter(id => id !== propertyId)
+        : [...prev, propertyId]
+    );
+  };
+
+  const handleMapFilterChange = (filters: MapFilters) => {
+    setMapFilters(filters);
+  };
+
+  const getCategoryBadge = (category: Category) => {
+    const colors: Record<Category, string> = {
+      [Category.resale]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+      [Category.rental]: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+      [Category.underConstruction]: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    };
+    return <Badge className={colors[category]}>{category}</Badge>;
+  };
+
+  const getPropertyTypeBadge = (propertyType: PropertyType) => {
+    const colors: Record<PropertyType, string> = {
+      [PropertyType.residential]: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+      [PropertyType.commercial]: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
+      [PropertyType.industrial]: 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200',
+    };
+    const labels: Record<PropertyType, string> = {
+      [PropertyType.residential]: 'Residential',
+      [PropertyType.commercial]: 'Commercial',
+      [PropertyType.industrial]: 'Industrial',
+    };
+    return <Badge className={colors[propertyType]}>{labels[propertyType]}</Badge>;
+  };
+
+  const getConfigurationLabel = (configuration: Configuration): string => {
+    const labels: Record<Configuration, string> = {
+      [Configuration.rk1]: '1 RK',
+      [Configuration.bhk1]: '1 BHK',
+      [Configuration.bhk1_5]: '1.5 BHK',
+      [Configuration.bhk2]: '2 BHK',
+      [Configuration.bhk2_5]: '2.5 BHK',
+      [Configuration.bhk3]: '3 BHK',
+      [Configuration.bhk3_5]: '3.5 BHK',
+      [Configuration.bhk4]: '4 BHK',
+      [Configuration.bhk5]: '5 BHK',
+      [Configuration.jodiFlat]: 'Jodi Flat',
+      [Configuration.duplex]: 'Duplex',
+      [Configuration.penthouse]: 'Penthouse',
+      [Configuration.bungalow]: 'Bungalow',
+      [Configuration.independentHouse]: 'Independent House',
+    };
+    return labels[configuration];
+  };
+
+  const getFurnishingLabel = (furnishing: Furnishing): string => {
+    const labels: Record<Furnishing, string> = {
+      [Furnishing.unfurnished]: 'Unfurnished',
+      [Furnishing.semiFurnished]: 'Semi Furnished',
+      [Furnishing.furnished]: 'Furnished',
+    };
+    return labels[furnishing];
+  };
+
+  const getFurnishingBadge = (furnishing: Furnishing) => {
+    const colors: Record<Furnishing, string> = {
+      [Furnishing.unfurnished]: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+      [Furnishing.semiFurnished]: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+      [Furnishing.furnished]: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
+    };
+    return <Badge className={colors[furnishing]}>{getFurnishingLabel(furnishing)}</Badge>;
+  };
+
+  const getStatusBadge = (status: Status) => {
+    const variants: Record<Status, 'default' | 'secondary' | 'outline'> = {
+      [Status.available]: 'default',
+      [Status.sold]: 'secondary',
+      [Status.rented]: 'secondary',
+      [Status.underContract]: 'outline',
+    };
+    return <Badge variant={variants[status]}>{status}</Badge>;
+  };
+
+  const filterByCategory = (category: Category | 'all') => {
+    if (category === 'all') return properties;
+    return properties.filter((p) => p.category === category);
+  };
+
+  const PropertyTable = ({ properties }: { properties: Property[] }) => (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {showMapView && (
+              <TableHead className="w-12">
+                <input
+                  type="checkbox"
+                  checked={selectedPropertyIds.length === properties.length && properties.length > 0}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedPropertyIds(properties.map(p => p.id));
+                    } else {
+                      setSelectedPropertyIds([]);
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+              </TableHead>
+            )}
+            <TableHead>Title</TableHead>
+            <TableHead>Images</TableHead>
+            <TableHead>Location</TableHead>
+            <TableHead>Price</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Property Type</TableHead>
+            <TableHead>Configuration</TableHead>
+            <TableHead>Furnishing</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {properties.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={showMapView ? 11 : 10} className="text-center text-muted-foreground">
+                No properties found
+              </TableCell>
+            </TableRow>
+          ) : (
+            properties.map((property) => (
+              <TableRow key={property.id}>
+                {showMapView && (
+                  <TableCell>
+                    <input
+                      type="checkbox"
+                      checked={selectedPropertyIds.includes(property.id)}
+                      onChange={() => togglePropertySelection(property.id)}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                  </TableCell>
+                )}
+                <TableCell className="font-medium">{property.title}</TableCell>
+                <TableCell>
+                  {property.images.length > 0 ? (
+                    <div className="flex items-center gap-1">
+                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">{property.images.length}</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No images</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <MapPin className="h-3 w-3" />
+                    {property.location.roadName && `${property.location.roadName}, `}
+                    {property.location.area}, {property.location.suburb}
+                  </div>
+                </TableCell>
+                <TableCell>₹{Number(property.price).toLocaleString()}</TableCell>
+                <TableCell>{getCategoryBadge(property.category)}</TableCell>
+                <TableCell>{getPropertyTypeBadge(property.propertyType)}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="font-medium">
+                    {getConfigurationLabel(property.configuration)}
+                  </Badge>
+                </TableCell>
+                <TableCell>{getFurnishingBadge(property.furnishing)}</TableCell>
+                <TableCell>{getStatusBadge(property.status)}</TableCell>
+                <TableCell className="text-right">
+                  <Button variant="outline" size="sm" onClick={() => openEditDialog(property)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
+  const ImageUploadSection = () => (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="property-images">Upload Property Images</Label>
+        <p className="text-sm text-muted-foreground">
+          Upload high-resolution images (JPG, PNG). Maximum 10 MB per image.
+        </p>
+        <div className="flex items-center gap-2">
+          <Input
+            id="property-images"
+            type="file"
+            accept="image/jpeg,image/png,image/jpg"
+            multiple
+            onChange={handleFileSelect}
+            className="cursor-pointer"
+          />
+          <Button type="button" variant="outline" onClick={() => document.getElementById('property-images')?.click()}>
+            <Upload className="mr-2 h-4 w-4" />
+            Browse
+          </Button>
+        </div>
+        {uploadError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{uploadError}</AlertDescription>
+          </Alert>
+        )}
+      </div>
+
+      {imagePreviews.length > 0 && (
+        <div className="space-y-2">
+          <Label>Image Previews ({imagePreviews.length})</Label>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            {imagePreviews.map((preview, index) => (
+              <div key={index} className="group relative aspect-video overflow-hidden rounded-lg border bg-muted">
+                <img
+                  src={preview.url}
+                  alt={`Preview ${index + 1}`}
+                  className="h-full w-full object-cover"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute right-2 top-2 h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
+                  onClick={() => removeImagePreview(index)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                {uploadProgress[preview.file.name] !== undefined && uploadProgress[preview.file.name] < 100 && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                    <div className="text-center text-white">
+                      <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                      <p className="mt-1 text-xs">{uploadProgress[preview.file.name]}%</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="mb-2 text-3xl font-bold">Properties Management</h1>
+          <p className="text-muted-foreground">Manage resale, rental, and under-construction properties</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowMapView(!showMapView)}>
+            <MapIcon className="mr-2 h-4 w-4" />
+            {showMapView ? 'Table View' : 'Map View'}
+          </Button>
+          <Button onClick={() => setShowAddDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Property
+          </Button>
+        </div>
+      </div>
+
+      {showMapView ? (
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Interactive Map with Real-Time Filters</CardTitle>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="clustering"
+                      checked={showClustering}
+                      onCheckedChange={setShowClustering}
+                    />
+                    <Label htmlFor="clustering" className="cursor-pointer text-sm">
+                      <Layers className="mr-1 inline h-4 w-4" />
+                      Clustering
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="radius"
+                      checked={showRadiusCircles}
+                      onCheckedChange={setShowRadiusCircles}
+                    />
+                    <Label htmlFor="radius" className="cursor-pointer text-sm">
+                      <MapPin className="mr-1 inline h-4 w-4" />
+                      Radius Circles
+                    </Label>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[600px]">
+                <PropertyMap
+                  properties={properties}
+                  onPropertyClick={openEditDialog}
+                  showClustering={showClustering}
+                  showRadiusCircles={showRadiusCircles}
+                  selectedPropertyIds={selectedPropertyIds}
+                  onFilterChange={handleMapFilterChange}
+                  enableFilters={true}
+                  isFiltering={isLoading}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                Property List
+                {useFilters && (
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    (Filtered: {properties.length} {properties.length === 1 ? 'property' : 'properties'})
+                  </span>
+                )}
+                {!useFilters && selectedPropertyIds.length > 0 && (
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    ({selectedPropertyIds.length} selected)
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <Tabs defaultValue="all">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="all">All ({properties.length})</TabsTrigger>
+                    <TabsTrigger value="resale">Resale ({filterByCategory(Category.resale).length})</TabsTrigger>
+                    <TabsTrigger value="rental">Rental ({filterByCategory(Category.rental).length})</TabsTrigger>
+                    <TabsTrigger value="underConstruction">Under Construction ({filterByCategory(Category.underConstruction).length})</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="all">
+                    <PropertyTable properties={properties} />
+                  </TabsContent>
+                  <TabsContent value="resale">
+                    <PropertyTable properties={filterByCategory(Category.resale)} />
+                  </TabsContent>
+                  <TabsContent value="rental">
+                    <PropertyTable properties={filterByCategory(Category.rental)} />
+                  </TabsContent>
+                  <TabsContent value="underConstruction">
+                    <PropertyTable properties={filterByCategory(Category.underConstruction)} />
+                  </TabsContent>
+                </Tabs>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>All Properties</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <Tabs defaultValue="all">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="all">All ({properties.length})</TabsTrigger>
+                  <TabsTrigger value="resale">Resale ({filterByCategory(Category.resale).length})</TabsTrigger>
+                  <TabsTrigger value="rental">Rental ({filterByCategory(Category.rental).length})</TabsTrigger>
+                  <TabsTrigger value="underConstruction">Under Construction ({filterByCategory(Category.underConstruction).length})</TabsTrigger>
+                </TabsList>
+                <TabsContent value="all">
+                  <PropertyTable properties={properties} />
+                </TabsContent>
+                <TabsContent value="resale">
+                  <PropertyTable properties={filterByCategory(Category.resale)} />
+                </TabsContent>
+                <TabsContent value="rental">
+                  <PropertyTable properties={filterByCategory(Category.rental)} />
+                </TabsContent>
+                <TabsContent value="underConstruction">
+                  <PropertyTable properties={filterByCategory(Category.underConstruction)} />
+                </TabsContent>
+              </Tabs>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Property</DialogTitle>
+            <DialogDescription>Search for a location or drag the marker to set the exact position</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="add-title">Title</Label>
+              <Input
+                id="add-title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Property title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-description">Description</Label>
+              <Textarea
+                id="add-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Property description"
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="add-city">City</Label>
+                <Input
+                  id="add-city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  placeholder="Mumbai"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-suburb">Suburb</Label>
+                <Input
+                  id="add-suburb"
+                  value={formData.suburb}
+                  onChange={(e) => setFormData({ ...formData, suburb: e.target.value })}
+                  placeholder="Andheri"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="add-area">Area</Label>
+                <Input
+                  id="add-area"
+                  value={formData.area}
+                  onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                  placeholder="West"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-roadName">Road Name</Label>
+                <Input
+                  id="add-roadName"
+                  value={formData.roadName}
+                  onChange={(e) => setFormData({ ...formData, roadName: e.target.value })}
+                  placeholder="S.V. Road"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-price">Price (₹)</Label>
+              <Input
+                id="add-price"
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                placeholder="5000000"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="add-category">Category</Label>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value as Category })}>
+                  <SelectTrigger id="add-category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Category.resale}>Resale</SelectItem>
+                    <SelectItem value={Category.rental}>Rental</SelectItem>
+                    <SelectItem value={Category.underConstruction}>Under Construction</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-propertyType">
+                  Property Type <span className="text-destructive">*</span>
+                </Label>
+                <Select value={formData.propertyType} onValueChange={(value) => setFormData({ ...formData, propertyType: value as PropertyType })}>
+                  <SelectTrigger id="add-propertyType">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={PropertyType.residential}>Residential</SelectItem>
+                    <SelectItem value={PropertyType.commercial}>Commercial</SelectItem>
+                    <SelectItem value={PropertyType.industrial}>Industrial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="add-configuration">
+                  Configuration <span className="text-destructive">*</span>
+                </Label>
+                <Select value={formData.configuration} onValueChange={(value) => setFormData({ ...formData, configuration: value as Configuration })}>
+                  <SelectTrigger id="add-configuration">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Configuration.rk1}>1 RK</SelectItem>
+                    <SelectItem value={Configuration.bhk1}>1 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk1_5}>1.5 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk2}>2 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk2_5}>2.5 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk3}>3 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk3_5}>3.5 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk4}>4 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk5}>5 BHK</SelectItem>
+                    <SelectItem value={Configuration.jodiFlat}>Jodi Flat</SelectItem>
+                    <SelectItem value={Configuration.duplex}>Duplex</SelectItem>
+                    <SelectItem value={Configuration.penthouse}>Penthouse</SelectItem>
+                    <SelectItem value={Configuration.bungalow}>Bungalow</SelectItem>
+                    <SelectItem value={Configuration.independentHouse}>Independent House</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-furnishing">
+                  Furnishing <span className="text-destructive">*</span>
+                </Label>
+                <Select value={formData.furnishing} onValueChange={(value) => setFormData({ ...formData, furnishing: value as Furnishing })}>
+                  <SelectTrigger id="add-furnishing">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Furnishing.unfurnished}>Unfurnished</SelectItem>
+                    <SelectItem value={Furnishing.semiFurnished}>Semi Furnished</SelectItem>
+                    <SelectItem value={Furnishing.furnished}>Furnished</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <ImageUploadSection />
+
+            <div className="space-y-2">
+              <Label>Property Location</Label>
+              <p className="text-sm text-muted-foreground">Search for an address or drag the marker to set the location</p>
+              <div className="h-[400px] w-full rounded-md border">
+                <PropertyMap
+                  properties={[]}
+                  center={formData.coordinates}
+                  draggableMarker={formData.coordinates}
+                  onMarkerDragEnd={handleCoordinatesChange}
+                  onPlaceSelected={handlePlaceSelected}
+                  showClustering={false}
+                  showRadiusCircles={false}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Coordinates: {formData.coordinates.lat.toFixed(6)}, {formData.coordinates.lng.toFixed(6)}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAdd}
+              disabled={!formData.title || !formData.city || !formData.price || addProperty.isPending}
+            >
+              {addProperty.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Add Property
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Property</DialogTitle>
+            <DialogDescription>Search for a location or drag the marker to update the position</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Title</Label>
+              <Input
+                id="edit-title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Property title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Property description"
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-city">City</Label>
+                <Input
+                  id="edit-city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  placeholder="Mumbai"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-suburb">Suburb</Label>
+                <Input
+                  id="edit-suburb"
+                  value={formData.suburb}
+                  onChange={(e) => setFormData({ ...formData, suburb: e.target.value })}
+                  placeholder="Andheri"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-area">Area</Label>
+                <Input
+                  id="edit-area"
+                  value={formData.area}
+                  onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                  placeholder="West"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-roadName">Road Name</Label>
+                <Input
+                  id="edit-roadName"
+                  value={formData.roadName}
+                  onChange={(e) => setFormData({ ...formData, roadName: e.target.value })}
+                  placeholder="S.V. Road"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-price">Price (₹)</Label>
+              <Input
+                id="edit-price"
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                placeholder="5000000"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-category">Category</Label>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value as Category })}>
+                  <SelectTrigger id="edit-category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Category.resale}>Resale</SelectItem>
+                    <SelectItem value={Category.rental}>Rental</SelectItem>
+                    <SelectItem value={Category.underConstruction}>Under Construction</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-propertyType">
+                  Property Type <span className="text-destructive">*</span>
+                </Label>
+                <Select value={formData.propertyType} onValueChange={(value) => setFormData({ ...formData, propertyType: value as PropertyType })}>
+                  <SelectTrigger id="edit-propertyType">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={PropertyType.residential}>Residential</SelectItem>
+                    <SelectItem value={PropertyType.commercial}>Commercial</SelectItem>
+                    <SelectItem value={PropertyType.industrial}>Industrial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-configuration">
+                  Configuration <span className="text-destructive">*</span>
+                </Label>
+                <Select value={formData.configuration} onValueChange={(value) => setFormData({ ...formData, configuration: value as Configuration })}>
+                  <SelectTrigger id="edit-configuration">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Configuration.rk1}>1 RK</SelectItem>
+                    <SelectItem value={Configuration.bhk1}>1 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk1_5}>1.5 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk2}>2 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk2_5}>2.5 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk3}>3 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk3_5}>3.5 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk4}>4 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk5}>5 BHK</SelectItem>
+                    <SelectItem value={Configuration.jodiFlat}>Jodi Flat</SelectItem>
+                    <SelectItem value={Configuration.duplex}>Duplex</SelectItem>
+                    <SelectItem value={Configuration.penthouse}>Penthouse</SelectItem>
+                    <SelectItem value={Configuration.bungalow}>Bungalow</SelectItem>
+                    <SelectItem value={Configuration.independentHouse}>Independent House</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-furnishing">
+                  Furnishing <span className="text-destructive">*</span>
+                </Label>
+                <Select value={formData.furnishing} onValueChange={(value) => setFormData({ ...formData, furnishing: value as Furnishing })}>
+                  <SelectTrigger id="edit-furnishing">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Furnishing.unfurnished}>Unfurnished</SelectItem>
+                    <SelectItem value={Furnishing.semiFurnished}>Semi Furnished</SelectItem>
+                    <SelectItem value={Furnishing.furnished}>Furnished</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-status">Status</Label>
+              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as Status })}>
+                <SelectTrigger id="edit-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={Status.available}>Available</SelectItem>
+                  <SelectItem value={Status.sold}>Sold</SelectItem>
+                  <SelectItem value={Status.rented}>Rented</SelectItem>
+                  <SelectItem value={Status.underContract}>Under Contract</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <ImageUploadSection />
+
+            <div className="space-y-2">
+              <Label>Property Location</Label>
+              <p className="text-sm text-muted-foreground">Search for an address or drag the marker to update the location</p>
+              <div className="h-[400px] w-full rounded-md border">
+                <PropertyMap
+                  properties={[]}
+                  center={formData.coordinates}
+                  draggableMarker={formData.coordinates}
+                  onMarkerDragEnd={handleCoordinatesChange}
+                  onPlaceSelected={handlePlaceSelected}
+                  showClustering={false}
+                  showRadiusCircles={false}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Coordinates: {formData.coordinates.lat.toFixed(6)}, {formData.coordinates.lng.toFixed(6)}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleEdit}
+              disabled={!formData.title || !formData.city || !formData.price || updateProperty.isPending}
+            >
+              {updateProperty.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Update Property
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

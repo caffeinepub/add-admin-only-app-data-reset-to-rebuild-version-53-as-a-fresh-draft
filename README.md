@@ -1,2 +1,3 @@
-# add-admin-only-app-data-reset-to-rebuild-version-53-as-a-fresh-draft
-Exported from Caffeine project: Add admin-only app data reset to rebuild Version 53 as a fresh draft
+## 
+
+To run app build and run docker image: `docker build -t app . docker run -it --network host app`

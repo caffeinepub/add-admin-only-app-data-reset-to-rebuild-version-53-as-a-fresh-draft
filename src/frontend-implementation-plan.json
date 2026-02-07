@@ -1,0 +1,35 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Admin-only fresh-draft reset control (frontend)",
+  "requirements": [
+    {
+      "id": "REQ-2",
+      "summary": "Add an admin-only destructive reset control that calls resetToFreshDraft(), confirms intent, surfaces errors, and refreshes React Query state across the app.",
+      "acceptanceCriteria": [
+        "A reset control is visible only to admins (reuse the existing isAdmin gating logic already used for admin-only navigation).",
+        "Triggering reset requires an explicit confirmation (e.g., confirmation dialog) and prevents accidental activation.",
+        "On successful reset, the frontend clears/refreshes React Query caches so Dashboard/Agents/Properties/Inquiries/Reports reflect the empty state without requiring a hard reload.",
+        "User-facing text for the reset action and confirmation is in English.",
+        "Errors from the reset action are surfaced to the user (e.g., via existing toast pattern in hooks)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add a new React Query mutation hook (e.g., useResetToFreshDraft) that calls the backend capability resetToFreshDraft(). On success, invalidate/refresh relevant query keys (agents, properties, inquiries, combinedAnalytics, currentUserProfile, currentUserRole, isCallerAdmin, and any filtered property queries) so all pages reflect the empty state; on error, surface a toast using the existing sonner toast pattern. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/AdminResetControl.tsx",
+          "operation": "create",
+          "description": "Create an admin-only UI control component that uses the existing authorization gating (useIsCallerAdmin) to render a destructive \"Reset app data\" action only for admins. Implement a clear confirmation flow using existing composed UI components (e.g., Dialog + Button + Input) requiring an explicit confirmation step (such as typing \"RESET\") before enabling the final destructive action; call the useResetToFreshDraft mutation and show loading/disabled states while in progress. Ensure all user-facing strings are in English and errors are shown via the hook's toast behavior. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/Dashboard.tsx",
+          "operation": "modify",
+          "description": "Wire the new AdminResetControl into an existing required page (Dashboard) so it is reachable without adding new routes. Place it in a clearly labeled admin-only \"Danger zone\" area and ensure it does not appear for non-admin users. Verify the component's usage instructions before implementing."
+        }
+      ]
+    }
+  ]
+}

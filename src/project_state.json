@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-add-a-frontend-admin-only-ui-control-to-trigger-the-backend-reset-with-a-clear-destructive-confirmation-flow-and-refresh-the-ui-state-after-completion",
+      "title": "Add a frontend admin-only UI control to trigger the backend reset with a clear destructive confirmation flow, and refresh the UI state after completion.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Reset/Rebuild Version 53 from scratch as a fresh draft",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Implement an admin-only backend method to reset the application to a fresh-draft state by clearing all persisted domain data (agents, properties, inquiries, and user profiles).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Add admin-only app data reset to rebuild Version 53 as a fresh draft",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

@@ -1,0 +1,61 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-07T18:00:37.854Z",
+  "summary": "REQ-2 is partially implemented on the frontend via a new admin-gated reset control with a destructive confirmation dialog. However, the diff summary does not provide sufficient evidence that the backend admin-only reset method (REQ-1) exists and clears all required persisted state, nor that the frontend refreshes/clears React Query caches after a successful reset.",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "Implement an admin-only backend method to reset the application to a fresh-draft state by clearing all persisted domain data (agents, properties, inquiries, and user profiles).",
+      "reason": "The provided backend/main.mo excerpt does not show any new shared reset method, any admin check using AccessControl, or any code that clears the agents/properties/inquiries/userProfiles state. Because the file is truncated, this cannot be confirmed from the diff summary.",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "On successful reset, the frontend clears/refreshes React Query caches so Dashboard/Agents/Properties/Inquiries/Reports reflect the empty state without requiring a hard reload.",
+      "reason": "AdminResetControl closes the dialog and clears local confirmation state, but the excerpt does not show any React Query cache invalidation/reset logic being triggered after reset. The diff summary text (frontend-file-summaries.txt) claims cache invalidation exists, but the actual useQueries.ts excerpt provided does not include the new reset mutation implementation to verify this.",
+      "evidence": [
+        "frontend/src/components/AdminResetControl.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend-file-summaries.txt"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Added a Motoko migration module and applied it to the main actor via a migration with-clause.",
+      "reason": "The BuildRequest only asked for an admin-only reset method and a frontend control; it did not request introducing a migration module or altering upgrade/migration wiring.",
+      "evidence": [
+        "backend/migration.mo",
+        "backend/main.mo"
+      ]
+    },
+    {
+      "description": "Introduced/updated a project tracking file (project_state.json) listing feature requests.",
+      "reason": "This project-state bookkeeping file is not part of the stated requirements or acceptance criteria for the reset feature.",
+      "evidence": [
+        "project_state.json"
+      ]
+    },
+    {
+      "description": "Documented (or claimed) numerous unrelated frontend features (e.g., HD image upload module, comprehensive analytics/charts, Google Maps authorization fixes, CSV export, etc.).",
+      "reason": "These features are not requested in REQ-1/REQ-2 and appear only as assertions in the modified summary file, not as required changes for this request.",
+      "evidence": [
+        "frontend-file-summaries.txt"
+      ]
+    }
+  ],
+  "confidence": 0.56,
+  "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/components/AdminResetControl.tsx",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/Dashboard.tsx",
+    "project_state.json"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "kind": "build_request",
+  "title": "Add admin-only app data reset to rebuild Version 53 as a fresh draft",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Implement an admin-only backend method to reset the application to a fresh-draft state by clearing all persisted domain data (agents, properties, inquiries, and user profiles).",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A new shared backend method exists that can be called only by an admin (using the existing AccessControl admin check).",
+        "Calling the reset method removes all agents, properties, inquiries, and userProfiles from the backend state.",
+        "After reset, existing query methods (e.g., getAllAgents/getAllProperties/getAllInquiries/getCallerUserProfile) return empty results / null as appropriate.",
+        "Non-admin callers receive an unauthorized error/trap when attempting to call the reset method."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Add a frontend admin-only UI control to trigger the backend reset with a clear destructive confirmation flow, and refresh the UI state after completion.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A reset control is visible only to admins (reuse the existing isAdmin gating logic already used for admin-only navigation).",
+        "Triggering reset requires an explicit confirmation (e.g., confirmation dialog) and prevents accidental activation.",
+        "On successful reset, the frontend clears/refreshes React Query caches so Dashboard/Agents/Properties/Inquiries/Reports reflect the empty state without requiring a hard reload.",
+        "User-facing text for the reset action and confirmation is in English.",
+        "Errors from the reset action are surfaced to the user (e.g., via existing toast pattern in hooks)."
+      ]
+    }
+  ],
+  "constraints": [
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
+    "Do not modify files under frontend/src/components/ui or any frontend immutablePaths (compose existing UI components instead).",
+    "Use English for all user-facing text."
+  ],
+  "nonGoals": [
+    "Deleting or garbage-collecting previously uploaded blobs in blob storage (unless existing storage mixins already provide a supported safe delete-all mechanism).",
+    "Reverting code to an earlier git/project snapshot; this request is limited to resetting runtime app data to simulate a fresh draft."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

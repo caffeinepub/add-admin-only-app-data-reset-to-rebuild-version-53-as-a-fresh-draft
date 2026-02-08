@@ -1,56 +1,77 @@
 {
   "kind": "build_request",
-  "title": "Add admin-only app data reset to rebuild Version 53 as a fresh draft",
-  "priority": "normal",
+  "title": "Fix Google Maps Places Autocomplete selection to update input and pinpoint marker",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "Implement an admin-only backend method to reset the application to a fresh-draft state by clearing all persisted domain data (agents, properties, inquiries, and user profiles).",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "1"
-        ]
-      },
-      "acceptanceCriteria": [
-        "A new shared backend method exists that can be called only by an admin (using the existing AccessControl admin check).",
-        "Calling the reset method removes all agents, properties, inquiries, and userProfiles from the backend state.",
-        "After reset, existing query methods (e.g., getAllAgents/getAllProperties/getAllInquiries/getCallerUserProfile) return empty results / null as appropriate.",
-        "Non-admin callers receive an unauthorized error/trap when attempting to call the reset method."
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Add a frontend admin-only UI control to trigger the backend reset with a clear destructive confirmation flow, and refresh the UI state after completion.",
+      "id": "REQ-6",
+      "text": "Fix the Google Maps Places Autocomplete selection flow in `frontend/src/components/PropertyMap.tsx` so that when a user clicks a suggestion: (1) the search input value updates to the selected place text, and (2) the map re-centers and the location marker moves/pinpoints to the selected place coordinates.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-9"
         ],
         "quotes": [
-          "1"
+          "Apply to fix now"
         ]
       },
       "acceptanceCriteria": [
-        "A reset control is visible only to admins (reuse the existing isAdmin gating logic already used for admin-only navigation).",
-        "Triggering reset requires an explicit confirmation (e.g., confirmation dialog) and prevents accidental activation.",
-        "On successful reset, the frontend clears/refreshes React Query caches so Dashboard/Agents/Properties/Inquiries/Reports reflect the empty state without requiring a hard reload.",
-        "User-facing text for the reset action and confirmation is in English.",
-        "Errors from the reset action are surfaced to the user (e.g., via existing toast pattern in hooks)."
+        "Typing in the map search input shows Places Autocomplete suggestions (no regression).",
+        "Clicking a suggestion updates the search input value to the selected place (e.g., `place.formatted_address` or `place.name`).",
+        "After clicking a suggestion, the map center updates to the selected place coordinates.",
+        "After clicking a suggestion, the visible marker that represents the selected location moves to the selected place coordinates.",
+        "No console errors occur during selection, and selection works consistently across repeated selections without requiring a page refresh."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Ensure the existing `onPlaceSelected` callback is invoked reliably after a Places Autocomplete suggestion is selected, and that it includes best-effort parsed address fields (city, suburb, area, roadName) plus coordinates, so `frontend/src/pages/PropertiesPage.tsx` continues to update the property form fields and coordinates from map selection.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6",
+          "msg-7"
+        ],
+        "quotes": [
+          "Location suggestion appears but while clicking the desire Location it doesn't pin point the location selected",
+          "No"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When a suggestion is selected, `onPlaceSelected` is called exactly once per selection with `{ city, suburb, area, roadName, coords }`.",
+        "In Properties Add/Edit flows, selecting a suggestion updates the form fields (city, suburb, area, roadName) and coordinates in the UI to match the selected place.",
+        "If a selected place is missing some address components, the callback still fires with empty-string values for missing fields (not `undefined`), and coordinates are still set."
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Add regression-proofing for the Autocomplete event wiring in `frontend/src/components/PropertyMap.tsx` to prevent “suggestions appear but click does nothing” issues after retries/navigation: ensure the Autocomplete instance is bound to the correct input element, and that the `place_changed` listener is registered exactly once and properly cleaned up on unmount/re-init.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6",
+          "msg-7"
+        ],
+        "quotes": [
+          "Location suggestion appears but while clicking the desire Location it doesn't pin point the location selected",
+          "2"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The Autocomplete `place_changed` handler fires when selecting a suggestion via mouse click.",
+        "The handler continues to work after toggling between pages/views that mount/unmount the map (no stale listeners).",
+        "There is no accumulation of listeners across retries (validated by consistent single handler execution per selection)."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
-    "Do not modify files under frontend/src/components/ui or any frontend immutablePaths (compose existing UI components instead).",
-    "Use English for all user-facing text."
+    "Do not edit any files under `frontend/src/components/ui` (read-only shadcn components).",
+    "Do not modify immutable hook files: `frontend/src/hooks/useInternetIdentity.ts`, `frontend/src/hooks/useInternetIdentity.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`.",
+    "Keep all user-facing text in English."
   ],
   "nonGoals": [
-    "Deleting or garbage-collecting previously uploaded blobs in blob storage (unless existing storage mixins already provide a supported safe delete-all mechanism).",
-    "Reverting code to an earlier git/project snapshot; this request is limited to resetting runtime app data to simulate a fresh draft."
+    "Adding new map features beyond fixing selection (e.g., new layers, new filters, new clustering behavior).",
+    "Changing backend schema or adding backend endpoints for maps/autocomplete (this is a frontend Google Maps issue)."
   ],
   "imageRequirements": {
     "required": [],

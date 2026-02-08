@@ -1,33 +1,65 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Admin-only fresh-draft reset control (frontend)",
+  "title": "Fix Places Autocomplete selection to update search input, map center, marker, and callback reliability",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Add an admin-only destructive reset control that calls resetToFreshDraft(), confirms intent, surfaces errors, and refreshes React Query state across the app.",
+      "id": "REQ-6",
+      "summary": "Update PropertyMap Places Autocomplete selection to set the input text and move/recenter the map and marker to the selected place coordinates.",
       "acceptanceCriteria": [
-        "A reset control is visible only to admins (reuse the existing isAdmin gating logic already used for admin-only navigation).",
-        "Triggering reset requires an explicit confirmation (e.g., confirmation dialog) and prevents accidental activation.",
-        "On successful reset, the frontend clears/refreshes React Query caches so Dashboard/Agents/Properties/Inquiries/Reports reflect the empty state without requiring a hard reload.",
-        "User-facing text for the reset action and confirmation is in English.",
-        "Errors from the reset action are surfaced to the user (e.g., via existing toast pattern in hooks)."
+        "Typing in the map search input shows Places Autocomplete suggestions (no regression).",
+        "Clicking a suggestion updates the search input value to the selected place (e.g., `place.formatted_address` or `place.name`).",
+        "After clicking a suggestion, the map center updates to the selected place coordinates.",
+        "After clicking a suggestion, the visible marker that represents the selected location moves to the selected place coordinates.",
+        "No console errors occur during selection, and selection works consistently across repeated selections without requiring a page refresh."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/components/PropertyMap.tsx",
           "operation": "modify",
-          "description": "Add a new React Query mutation hook (e.g., useResetToFreshDraft) that calls the backend capability resetToFreshDraft(). On success, invalidate/refresh relevant query keys (agents, properties, inquiries, combinedAnalytics, currentUserProfile, currentUserRole, isCallerAdmin, and any filtered property queries) so all pages reflect the empty state; on error, surface a toast using the existing sonner toast pattern. Verify the component's usage instructions before implementing."
-        },
+          "description": "In the Places Autocomplete `place_changed` flow, ensure the selected place text is applied to the controlled `searchValue` state (and, if necessary, also written to the underlying input element) so the visible search input updates immediately. After selection, read best-available place coordinates (from geometry) and re-center the map (pan/fit/zoom as appropriate) and move/update the existing selected-location marker (the draggable marker if present, otherwise the dedicated selection marker) to the new coordinates. Add defensive checks to avoid console errors when place geometry is missing, while keeping suggestions working."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Ensure onPlaceSelected fires exactly once per suggestion selection with best-effort parsed address fields and coordinates so PropertiesPage updates its form reliably.",
+      "acceptanceCriteria": [
+        "When a suggestion is selected, `onPlaceSelected` is called exactly once per selection with `{ city, suburb, area, roadName, coords }`.",
+        "In Properties Add/Edit flows, selecting a suggestion updates the form fields (city, suburb, area, roadName) and coordinates in the UI to match the selected place.",
+        "If a selected place is missing some address components, the callback still fires with empty-string values for missing fields (not `undefined`), and coordinates are still set."
+      ],
+      "file_operations": [
         {
-          "path": "frontend/src/components/AdminResetControl.tsx",
+          "path": "frontend/src/utils/googlePlaces.ts",
           "operation": "create",
-          "description": "Create an admin-only UI control component that uses the existing authorization gating (useIsCallerAdmin) to render a destructive \"Reset app data\" action only for admins. Implement a clear confirmation flow using existing composed UI components (e.g., Dialog + Button + Input) requiring an explicit confirmation step (such as typing \"RESET\") before enabling the final destructive action; call the useResetToFreshDraft mutation and show loading/disabled states while in progress. Ensure all user-facing strings are in English and errors are shown via the hook's toast behavior. Verify the component's usage instructions before implementing."
+          "description": "Add a small utility to parse a Google Places `PlaceResult` into `{ city, suburb, area, roadName }` using best-effort matching on address components and falling back to empty strings for missing values; also include a helper to extract `{ lat, lng }` coordinates when available."
         },
         {
-          "path": "frontend/src/pages/Dashboard.tsx",
+          "path": "frontend/src/components/PropertyMap.tsx",
           "operation": "modify",
-          "description": "Wire the new AdminResetControl into an existing required page (Dashboard) so it is reachable without adding new routes. Place it in a clearly labeled admin-only \"Danger zone\" area and ensure it does not appear for non-admin users. Verify the component's usage instructions before implementing."
+          "description": "Use the new `googlePlaces` parsing utility when handling `place_changed` to build a normalized payload with empty-string defaults and extracted coordinates. Invoke the existing `onPlaceSelected` callback exactly once per selection (e.g., by using a single handler function and guarding against double-firing), and ensure the callback receives `{ city, suburb, area, roadName, coords }` every time a valid selection provides coordinates."
+        },
+        {
+          "path": "frontend/src/pages/PropertiesPage.tsx",
+          "operation": "modify",
+          "description": "Make the `handlePlaceSelected` handler stable and defensive (e.g., memoize and coerce any potentially missing string fields to `''`) so Add/Edit flows consistently update the form fields and coordinates in the UI from the map selection without unintended re-renders impacting map wiring."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Harden Autocomplete instance and listener lifecycle to prevent 'suggestions appear but click does nothing' after retries/navigation by binding to the correct input and registering exactly one cleaned-up listener.",
+      "acceptanceCriteria": [
+        "The Autocomplete `place_changed` handler fires when selecting a suggestion via mouse click.",
+        "The handler continues to work after toggling between pages/views that mount/unmount the map (no stale listeners).",
+        "There is no accumulation of listeners across retries (validated by consistent single handler execution per selection)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/PropertyMap.tsx",
+          "operation": "modify",
+          "description": "Refactor the Autocomplete setup effect to (1) always bind the Autocomplete instance to the current `searchInputRef` element, (2) register the `place_changed` listener exactly once, and (3) reliably clean up on unmount/re-init by removing the listener and clearing any stored Autocomplete instance refs. Ensure the effect dependencies do not cause repeated listener registration on state changes (like `searchValue`) while still recovering correctly after script retries/navigation."
         }
       ]
     }

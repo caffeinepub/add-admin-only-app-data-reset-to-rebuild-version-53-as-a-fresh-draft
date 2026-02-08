@@ -1,61 +1,52 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T18:00:37.854Z",
-  "summary": "REQ-2 is partially implemented on the frontend via a new admin-gated reset control with a destructive confirmation dialog. However, the diff summary does not provide sufficient evidence that the backend admin-only reset method (REQ-1) exists and clears all required persisted state, nor that the frontend refreshes/clears React Query caches after a successful reset.",
+  "generatedAt": "2026-02-07T19:02:45.786Z",
+  "summary": "The diff clearly adds a Google Places parsing utility and indicates updates to PropertyMap/PropertiesPage to improve Places Autocomplete selection handling. However, the provided truncated code for PropertyMap does not show the actual Autocomplete event wiring, listener cleanup, or the exact selection flow updates (input value update, map recenter, marker move, single-callback execution). Additionally, the diff summary text claims an Enter-to-geocode fallback behavior, which is outside the stated non-goals.",
   "missing_requirements": [
     {
-      "id": "REQ-1",
-      "requirement": "Implement an admin-only backend method to reset the application to a fresh-draft state by clearing all persisted domain data (agents, properties, inquiries, and user profiles).",
-      "reason": "The provided backend/main.mo excerpt does not show any new shared reset method, any admin check using AccessControl, or any code that clears the agents/properties/inquiries/userProfiles state. Because the file is truncated, this cannot be confirmed from the diff summary.",
+      "id": "REQ-6",
+      "requirement": "When a user clicks a Places Autocomplete suggestion in frontend/src/components/PropertyMap.tsx: update the search input value to the selected place text, re-center the map, and move/pinpoint the selected-location marker to the selected coordinates.",
+      "reason": "PropertyMap.tsx is truncated before any Autocomplete selection handler logic is shown; the diff excerpt does not provide direct evidence that the input value is updated on selection, that the map is re-centered, or that the selected-location marker is moved as a result of clicking a suggestion.",
       "evidence": [
-        "backend/main.mo"
+        "frontend/src/components/PropertyMap.tsx (truncated; only shows imports/state incl. searchValue)",
+        "frontend-file-summaries.txt (claims behavior, but not verifiable from the truncated code shown)"
       ]
     },
     {
-      "id": "REQ-2",
-      "requirement": "On successful reset, the frontend clears/refreshes React Query caches so Dashboard/Agents/Properties/Inquiries/Reports reflect the empty state without requiring a hard reload.",
-      "reason": "AdminResetControl closes the dialog and clears local confirmation state, but the excerpt does not show any React Query cache invalidation/reset logic being triggered after reset. The diff summary text (frontend-file-summaries.txt) claims cache invalidation exists, but the actual useQueries.ts excerpt provided does not include the new reset mutation implementation to verify this.",
+      "id": "REQ-7",
+      "requirement": "Ensure onPlaceSelected is invoked reliably exactly once per suggestion selection with { city, suburb, area, roadName, coords }, providing empty-string defaults for missing address fields, so PropertiesPage updates the form fields and coordinates.",
+      "reason": "While a new parse utility is added that returns empty-string defaults and coords, the truncated PropertyMap/PropertiesPage excerpts do not show the actual onPlaceSelected invocation path, nor evidence it fires exactly once per selection.",
       "evidence": [
-        "frontend/src/components/AdminResetControl.tsx",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend-file-summaries.txt"
+        "frontend/src/utils/googlePlaces.ts (parsePlaceResult provides empty-string defaults and coords)",
+        "frontend/src/components/PropertyMap.tsx (truncated; onPlaceSelected prop exists but invocation not shown)",
+        "frontend/src/pages/PropertiesPage.tsx (truncated; does not show handlePlaceSelected implementation)"
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "requirement": "Regression-proof Autocomplete event wiring in PropertyMap.tsx: bind Autocomplete to the correct input, register the place_changed listener exactly once, and properly clean it up on unmount/re-init (no stale/accumulated listeners).",
+      "reason": "The diff excerpt for PropertyMap.tsx does not include the Autocomplete initialization, listener registration, or cleanup code; therefore there is no direct evidence that the listener is registered exactly once and cleaned up.",
+      "evidence": [
+        "frontend/src/components/PropertyMap.tsx (truncated; refs include searchInputRef/autocompleteRef but wiring not shown)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Added a Motoko migration module and applied it to the main actor via a migration with-clause.",
-      "reason": "The BuildRequest only asked for an admin-only reset method and a frontend control; it did not request introducing a migration module or altering upgrade/migration wiring.",
+      "description": "Enter-to-geocode fallback for the location search input (geocoding typed text when user presses Enter without selecting a suggestion).",
+      "reason": "This behavior is described in the diff summary but is explicitly outside the BuildRequest scope (non-goals: adding new map features beyond fixing selection).",
       "evidence": [
-        "backend/migration.mo",
-        "backend/main.mo"
-      ]
-    },
-    {
-      "description": "Introduced/updated a project tracking file (project_state.json) listing feature requests.",
-      "reason": "This project-state bookkeeping file is not part of the stated requirements or acceptance criteria for the reset feature.",
-      "evidence": [
-        "project_state.json"
-      ]
-    },
-    {
-      "description": "Documented (or claimed) numerous unrelated frontend features (e.g., HD image upload module, comprehensive analytics/charts, Google Maps authorization fixes, CSV export, etc.).",
-      "reason": "These features are not requested in REQ-1/REQ-2 and appear only as assertions in the modified summary file, not as required changes for this request.",
-      "evidence": [
-        "frontend-file-summaries.txt"
+        "frontend-file-summaries.txt (PropertyMap description includes: \"includes Enter-to-geocode fallback\")"
       ]
     }
   ],
-  "confidence": 0.56,
+  "confidence": 0.46,
   "changed_files": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/AdminResetControl.tsx",
-    "frontend/src/hooks/useInternetIdentity.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/pages/Dashboard.tsx",
+    "frontend/src/components/PropertyMap.tsx",
+    "frontend/src/pages/PropertiesPage.tsx",
+    "frontend/src/utils/googlePlaces.ts",
     "project_state.json"
   ]
 }

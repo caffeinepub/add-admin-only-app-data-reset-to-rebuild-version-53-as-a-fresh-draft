@@ -16,10 +16,10 @@ import MixinAuthorization "authorization/MixinAuthorization";
 import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
 import OutCall "http-outcalls/outcall";
-import Migration "migration";
+
 
 // Apply migration with-clause to main actor
-(with migration = Migration.run)
+
 actor {
   include MixinStorage();
 

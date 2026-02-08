@@ -1,12 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Allow admins to reset all persisted app domain data to return the application to a fresh-draft (empty) state.
+**Goal:** Fix Google Maps Places Autocomplete selection so selecting a suggestion reliably updates the search input, recenters the map, moves the marker, and updates the property form via the existing callback.
 
 **Planned changes:**
-- Add a shared backend admin-only reset method (using existing AccessControl admin check) that clears all persisted agents, properties, inquiries, and user profiles.
-- Ensure existing backend query methods return empty results/null as appropriate after a reset and reject non-admin reset attempts with an unauthorized error.
-- Add an admin-only frontend control to trigger the reset with a destructive confirmation flow.
-- On successful reset, refresh/clear React Query caches so all relevant screens reflect the empty state without a hard reload, and surface errors to users via existing UI patterns.
+- Update `frontend/src/components/PropertyMap.tsx` so selecting a Places Autocomplete suggestion sets the input value to the selected place text and re-centers the map to the selected coordinates.
+- Ensure the selected-location marker updates/moves to the selected place coordinates after each selection.
+- Make `onPlaceSelected` fire reliably exactly once per selection with `{ city, suburb, area, roadName, coords }`, using empty strings for missing address fields, so `frontend/src/pages/PropertiesPage.tsx` continues to populate form fields and coordinates.
+- Add regression-proof Autocomplete wiring: bind the Autocomplete instance to the correct input element, register the `place_changed` listener exactly once, and clean up properly on unmount/re-init to prevent “suggestions appear but click does nothing” issues and listener accumulation.
 
-**User-visible outcome:** Admin users can explicitly confirm and trigger a full app data reset; afterward the UI updates to show no agents/properties/inquiries and no user profile data, while non-admin users cannot access the reset action.
+**User-visible outcome:** Users can click an autocomplete suggestion and immediately see the search input update, the map jump to the chosen location, the marker move to it, and the property form fields/coordinates update consistently across repeated selections and navigation without console errors.

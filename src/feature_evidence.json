@@ -2,12 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-frontend-admin-only-ui-control-to-trigger-the-backend-reset-with-a-clear-destructive-confirmation-flow-and-refresh-the-ui-state-after-completion",
-      "featureTitle": "Add a frontend admin-only UI control to trigger the backend reset with a clear destructive confirmation flow, and refresh the UI state after completion.",
+      "featureId": "feature-fix-the-google-maps-places-autocomplete-selection-flow-in-frontend-src-components-propertymap-tsx-so-that-when-a-user-clicks-a-suggestion-1-the-search-input-value-updates-to-the-selected-place-text-and-2-the-map-re-centers-and-the-location-marker-moves-pinpoints-to-the-selected-place-coordinates",
+      "featureTitle": "Fix the Google Maps Places Autocomplete selection flow in `frontend/src/components/PropertyMap.tsx` so that when a user clicks a suggestion: (1) the search input value updates to the selected place text, and (2) the map re-centers and the location marker moves/pinpoints to the selected place coordinates.",
       "files": [
-        "frontend/src/components/AdminResetControl.tsx",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/pages/Dashboard.tsx"
+        "frontend/src/components/PropertyMap.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -20,7 +18,51 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-2"
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-the-existing-onplaceselected-callback-is-invoked-reliably-after-a-places-autocomplete-suggestion-is-selected-and-that-it-includes-best-effort-parsed-address-fields-city-suburb-area-roadname-plus-coordinates-so-frontend-src-pages-propertiespage-tsx-continues-to-update-the-property-form-fields-and-coordinates-from-map-selection",
+      "featureTitle": "Ensure the existing `onPlaceSelected` callback is invoked reliably after a Places Autocomplete suggestion is selected, and that it includes best-effort parsed address fields (city, suburb, area, roadName) plus coordinates, so `frontend/src/pages/PropertiesPage.tsx` continues to update the property form fields and coordinates from map selection.",
+      "files": [
+        "frontend/src/components/PropertyMap.tsx",
+        "frontend/src/pages/PropertiesPage.tsx",
+        "frontend/src/utils/googlePlaces.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-regression-proofing-for-the-autocomplete-event-wiring-in-frontend-src-components-propertymap-tsx-to-prevent-suggestions-appear-but-click-does-nothing-issues-after-retries-navigation-ensure-the-autocomplete-instance-is-bound-to-the-correct-input-element-and-that-the-place-changed-listener-is-registered-exactly-once-and-properly-cleaned-up-on-unmount-re-init",
+      "featureTitle": "Add regression-proofing for the Autocomplete event wiring in `frontend/src/components/PropertyMap.tsx` to prevent “suggestions appear but click does nothing” issues after retries/navigation: ensure the Autocomplete instance is bound to the correct input element, and that the `place_changed` listener is registered exactly once and properly cleaned up on unmount/re-init.",
+      "files": [
+        "frontend/src/components/PropertyMap.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
       ],
       "confidence": "high"
     }

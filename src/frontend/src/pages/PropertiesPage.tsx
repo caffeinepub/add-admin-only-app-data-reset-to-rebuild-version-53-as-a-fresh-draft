@@ -314,6 +314,10 @@ export default function PropertiesPage() {
     setMapFilters(filters);
   };
 
+  const handlePropertyClick = (property: Property) => {
+    openEditDialog(property);
+  };
+
   const getCategoryBadge = (category: Category) => {
     const colors: Record<Category, string> = {
       [Category.resale]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
@@ -484,256 +488,19 @@ export default function PropertiesPage() {
     </div>
   );
 
-  const PropertyForm = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">Title</Label>
-        <Input
-          id="title"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          placeholder="Property title"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="Property description"
-          rows={3}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Location</Label>
-        <div className="grid grid-cols-2 gap-2">
-          <Input
-            placeholder="City"
-            value={formData.city}
-            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-          />
-          <Input
-            placeholder="Suburb"
-            value={formData.suburb}
-            onChange={(e) => setFormData({ ...formData, suburb: e.target.value })}
-          />
-          <Input
-            placeholder="Area"
-            value={formData.area}
-            onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-          />
-          <Input
-            placeholder="Road Name"
-            value={formData.roadName}
-            onChange={(e) => setFormData({ ...formData, roadName: e.target.value })}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Map Location</Label>
-        <div className="h-64 border rounded-md overflow-hidden">
-          <PropertyMap
-            properties={[]}
-            center={formData.coordinates}
-            draggableMarker={formData.coordinates}
-            onMarkerDragEnd={handleCoordinatesChange}
-            onPlaceSelected={handlePlaceSelected}
-            showClustering={false}
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Search for a location or drag the marker to set coordinates
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="price">Price (₹)</Label>
-          <Input
-            id="price"
-            type="number"
-            value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-            placeholder="0"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
-          <Select
-            value={formData.category}
-            onValueChange={(value) => setFormData({ ...formData, category: value as Category })}
-          >
-            <SelectTrigger id="category">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={Category.resale}>Resale</SelectItem>
-              <SelectItem value={Category.rental}>Rental</SelectItem>
-              <SelectItem value={Category.underConstruction}>Under Construction</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="propertyType">Property Type</Label>
-          <Select
-            value={formData.propertyType}
-            onValueChange={(value) => setFormData({ ...formData, propertyType: value as PropertyType })}
-          >
-            <SelectTrigger id="propertyType">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={PropertyType.residential}>Residential</SelectItem>
-              <SelectItem value={PropertyType.commercial}>Commercial</SelectItem>
-              <SelectItem value={PropertyType.industrial}>Industrial</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="configuration">Configuration</Label>
-          <Select
-            value={formData.configuration}
-            onValueChange={(value) => setFormData({ ...formData, configuration: value as Configuration })}
-          >
-            <SelectTrigger id="configuration">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={Configuration.rk1}>1 RK</SelectItem>
-              <SelectItem value={Configuration.bhk1}>1 BHK</SelectItem>
-              <SelectItem value={Configuration.bhk1_5}>1.5 BHK</SelectItem>
-              <SelectItem value={Configuration.bhk2}>2 BHK</SelectItem>
-              <SelectItem value={Configuration.bhk2_5}>2.5 BHK</SelectItem>
-              <SelectItem value={Configuration.bhk3}>3 BHK</SelectItem>
-              <SelectItem value={Configuration.bhk3_5}>3.5 BHK</SelectItem>
-              <SelectItem value={Configuration.bhk4}>4 BHK</SelectItem>
-              <SelectItem value={Configuration.bhk5}>5 BHK</SelectItem>
-              <SelectItem value={Configuration.jodiFlat}>Jodi Flat</SelectItem>
-              <SelectItem value={Configuration.duplex}>Duplex</SelectItem>
-              <SelectItem value={Configuration.penthouse}>Penthouse</SelectItem>
-              <SelectItem value={Configuration.bungalow}>Bungalow</SelectItem>
-              <SelectItem value={Configuration.independentHouse}>Independent House</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="furnishing">Furnishing</Label>
-          <Select
-            value={formData.furnishing}
-            onValueChange={(value) => setFormData({ ...formData, furnishing: value as Furnishing })}
-          >
-            <SelectTrigger id="furnishing">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={Furnishing.unfurnished}>Unfurnished</SelectItem>
-              <SelectItem value={Furnishing.semiFurnished}>Semi Furnished</SelectItem>
-              <SelectItem value={Furnishing.furnished}>Furnished</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {showEditDialog && (
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => setFormData({ ...formData, status: value as Status })}
-            >
-              <SelectTrigger id="status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={Status.available}>Available</SelectItem>
-                <SelectItem value={Status.sold}>Sold</SelectItem>
-                <SelectItem value={Status.rented}>Rented</SelectItem>
-                <SelectItem value={Status.underContract}>Under Contract</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="images">Images</Label>
-        <div className="flex items-center gap-2">
-          <Input
-            id="images"
-            type="file"
-            accept="image/jpeg,image/png,image/jpg"
-            multiple
-            onChange={handleFileSelect}
-            className="flex-1"
-          />
-          <Button type="button" variant="outline" size="icon">
-            <Upload className="h-4 w-4" />
-          </Button>
-        </div>
-        {uploadError && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{uploadError}</AlertDescription>
-          </Alert>
-        )}
-        {imagePreviews.length > 0 && (
-          <div className="grid grid-cols-3 gap-2 mt-2">
-            {imagePreviews.map((preview, index) => (
-              <div key={index} className="relative group">
-                <img
-                  src={preview.url}
-                  alt={`Preview ${index + 1}`}
-                  className="w-full h-24 object-cover rounded-md"
-                />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => removeImagePreview(index)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-                {uploadProgress[preview.file.name] !== undefined && uploadProgress[preview.file.name] < 100 && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 rounded-b-md overflow-hidden">
-                    <div
-                      className="h-full bg-blue-600 transition-all duration-300"
-                      style={{ width: `${uploadProgress[preview.file.name]}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Properties</h1>
-          <p className="text-muted-foreground">Manage property listings</p>
+          <h1 className="mb-2 text-3xl font-bold">Properties Management</h1>
+          <p className="text-muted-foreground">Manage your real estate listings</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setShowMapView(!showMapView)}>
             <MapIcon className="mr-2 h-4 w-4" />
             {showMapView ? 'Hide Map' : 'Show Map'}
           </Button>
-          <Button onClick={() => setShowAddDialog(true)}>
+          <Button onClick={() => { resetForm(); setShowAddDialog(true); }}>
             <Plus className="mr-2 h-4 w-4" />
             Add Property
           </Button>
@@ -741,31 +508,44 @@ export default function PropertiesPage() {
       </div>
 
       {showMapView && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Map View</CardTitle>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={showClustering}
-                    onCheckedChange={setShowClustering}
-                  />
-                  <Label>Clustering</Label>
-                </div>
+        <Card className="mb-6">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Property Map</CardTitle>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={showClustering}
+                  onCheckedChange={setShowClustering}
+                  id="clustering"
+                />
+                <Label htmlFor="clustering" className="text-sm cursor-pointer">
+                  <Layers className="inline h-4 w-4 mr-1" />
+                  Clustering
+                </Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={showRadiusCircles}
+                  onCheckedChange={setShowRadiusCircles}
+                  id="radius"
+                />
+                <Label htmlFor="radius" className="text-sm cursor-pointer">
+                  Radius Circles
+                </Label>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[500px] rounded-md overflow-hidden border">
+            <div className="h-[500px] rounded-lg overflow-hidden border">
               <PropertyMap
                 properties={properties}
                 selectedPropertyIds={selectedPropertyIds}
+                onPropertyClick={handlePropertyClick}
+                onMarkerDragEnd={handleCoordinatesChange}
+                enableFilters={true}
+                onFilterChange={handleMapFilterChange}
                 showClustering={showClustering}
                 showRadiusCircles={showRadiusCircles}
-                onFilterChange={handleMapFilterChange}
-                enableFilters={true}
-                isFiltering={useFilters}
               />
             </div>
           </CardContent>
@@ -778,18 +558,16 @@ export default function PropertiesPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
             <Tabs defaultValue="all">
-              <TabsList>
+              <TabsList className="mb-4 flex-wrap h-auto">
                 <TabsTrigger value="all">All ({properties.length})</TabsTrigger>
                 <TabsTrigger value="resale">Resale ({filterByCategory(Category.resale).length})</TabsTrigger>
                 <TabsTrigger value="rental">Rental ({filterByCategory(Category.rental).length})</TabsTrigger>
-                <TabsTrigger value="underConstruction">
-                  Under Construction ({filterByCategory(Category.underConstruction).length})
-                </TabsTrigger>
+                <TabsTrigger value="underConstruction">Under Construction ({filterByCategory(Category.underConstruction).length})</TabsTrigger>
               </TabsList>
               <TabsContent value="all">
                 <PropertyTable properties={properties} />
@@ -810,12 +588,231 @@ export default function PropertiesPage() {
 
       {/* Add Property Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Property</DialogTitle>
-            <DialogDescription>Fill in the property details below</DialogDescription>
+            <DialogDescription>Create a new property listing with location and details</DialogDescription>
           </DialogHeader>
-          <PropertyForm />
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="add-title">Title</Label>
+              <Input
+                id="add-title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Enter property title"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="add-description">Description</Label>
+              <Textarea
+                id="add-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Enter property description"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Location Search</Label>
+              <div className="h-[300px] rounded-lg overflow-hidden border">
+                <PropertyMap
+                  properties={[]}
+                  selectedPropertyIds={[]}
+                  onMarkerDragEnd={handleCoordinatesChange}
+                  onPlaceSelected={handlePlaceSelected}
+                  center={formData.coordinates}
+                  draggableMarker={formData.coordinates}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="add-city">City</Label>
+                <Input
+                  id="add-city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  placeholder="City"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-suburb">Suburb</Label>
+                <Input
+                  id="add-suburb"
+                  value={formData.suburb}
+                  onChange={(e) => setFormData({ ...formData, suburb: e.target.value })}
+                  placeholder="Suburb"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="add-area">Area</Label>
+                <Input
+                  id="add-area"
+                  value={formData.area}
+                  onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                  placeholder="Area"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-roadName">Road Name</Label>
+                <Input
+                  id="add-roadName"
+                  value={formData.roadName}
+                  onChange={(e) => setFormData({ ...formData, roadName: e.target.value })}
+                  placeholder="Road Name"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="add-price">Price (₹)</Label>
+              <Input
+                id="add-price"
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                placeholder="Enter price"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="add-category">Category</Label>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value as Category })}>
+                  <SelectTrigger id="add-category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Category.resale}>Resale</SelectItem>
+                    <SelectItem value={Category.rental}>Rental</SelectItem>
+                    <SelectItem value={Category.underConstruction}>Under Construction</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-propertyType">Property Type</Label>
+                <Select value={formData.propertyType} onValueChange={(value) => setFormData({ ...formData, propertyType: value as PropertyType })}>
+                  <SelectTrigger id="add-propertyType">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={PropertyType.residential}>Residential</SelectItem>
+                    <SelectItem value={PropertyType.commercial}>Commercial</SelectItem>
+                    <SelectItem value={PropertyType.industrial}>Industrial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="add-configuration">Configuration</Label>
+                <Select value={formData.configuration} onValueChange={(value) => setFormData({ ...formData, configuration: value as Configuration })}>
+                  <SelectTrigger id="add-configuration">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Configuration.rk1}>1 RK</SelectItem>
+                    <SelectItem value={Configuration.bhk1}>1 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk1_5}>1.5 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk2}>2 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk2_5}>2.5 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk3}>3 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk3_5}>3.5 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk4}>4 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk5}>5 BHK</SelectItem>
+                    <SelectItem value={Configuration.jodiFlat}>Jodi Flat</SelectItem>
+                    <SelectItem value={Configuration.duplex}>Duplex</SelectItem>
+                    <SelectItem value={Configuration.penthouse}>Penthouse</SelectItem>
+                    <SelectItem value={Configuration.bungalow}>Bungalow</SelectItem>
+                    <SelectItem value={Configuration.independentHouse}>Independent House</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-furnishing">Furnishing</Label>
+                <Select value={formData.furnishing} onValueChange={(value) => setFormData({ ...formData, furnishing: value as Furnishing })}>
+                  <SelectTrigger id="add-furnishing">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Furnishing.unfurnished}>Unfurnished</SelectItem>
+                    <SelectItem value={Furnishing.semiFurnished}>Semi Furnished</SelectItem>
+                    <SelectItem value={Furnishing.furnished}>Furnished</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="add-images">Property Images</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="add-images"
+                  type="file"
+                  accept="image/jpeg,image/png,image/jpg"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="cursor-pointer"
+                />
+                <Button type="button" variant="outline" size="icon" onClick={() => document.getElementById('add-images')?.click()}>
+                  <Upload className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Upload JPG or PNG images (max 10 MB each)
+              </p>
+              {uploadError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{uploadError}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            {imagePreviews.length > 0 && (
+              <div className="space-y-2">
+                <Label>Image Previews ({imagePreviews.length})</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={preview.url}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-24 object-cover rounded border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => removeImagePreview(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      {uploadProgress[preview.file.name] !== undefined && uploadProgress[preview.file.name] < 100 && (
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200">
+                          <div
+                            className="h-full bg-primary transition-all"
+                            style={{ width: `${uploadProgress[preview.file.name]}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowAddDialog(false); resetForm(); }}>
               Cancel
@@ -830,12 +827,246 @@ export default function PropertiesPage() {
 
       {/* Edit Property Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Property</DialogTitle>
-            <DialogDescription>Update the property details below</DialogDescription>
+            <DialogDescription>Update property details and location</DialogDescription>
           </DialogHeader>
-          <PropertyForm />
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Title</Label>
+              <Input
+                id="edit-title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Enter property title"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Enter property description"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Location Search</Label>
+              <div className="h-[300px] rounded-lg overflow-hidden border">
+                <PropertyMap
+                  properties={[]}
+                  selectedPropertyIds={[]}
+                  onMarkerDragEnd={handleCoordinatesChange}
+                  onPlaceSelected={handlePlaceSelected}
+                  center={formData.coordinates}
+                  draggableMarker={formData.coordinates}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-city">City</Label>
+                <Input
+                  id="edit-city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  placeholder="City"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-suburb">Suburb</Label>
+                <Input
+                  id="edit-suburb"
+                  value={formData.suburb}
+                  onChange={(e) => setFormData({ ...formData, suburb: e.target.value })}
+                  placeholder="Suburb"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-area">Area</Label>
+                <Input
+                  id="edit-area"
+                  value={formData.area}
+                  onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                  placeholder="Area"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-roadName">Road Name</Label>
+                <Input
+                  id="edit-roadName"
+                  value={formData.roadName}
+                  onChange={(e) => setFormData({ ...formData, roadName: e.target.value })}
+                  placeholder="Road Name"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-price">Price (₹)</Label>
+              <Input
+                id="edit-price"
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                placeholder="Enter price"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-category">Category</Label>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value as Category })}>
+                  <SelectTrigger id="edit-category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Category.resale}>Resale</SelectItem>
+                    <SelectItem value={Category.rental}>Rental</SelectItem>
+                    <SelectItem value={Category.underConstruction}>Under Construction</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-propertyType">Property Type</Label>
+                <Select value={formData.propertyType} onValueChange={(value) => setFormData({ ...formData, propertyType: value as PropertyType })}>
+                  <SelectTrigger id="edit-propertyType">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={PropertyType.residential}>Residential</SelectItem>
+                    <SelectItem value={PropertyType.commercial}>Commercial</SelectItem>
+                    <SelectItem value={PropertyType.industrial}>Industrial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-configuration">Configuration</Label>
+                <Select value={formData.configuration} onValueChange={(value) => setFormData({ ...formData, configuration: value as Configuration })}>
+                  <SelectTrigger id="edit-configuration">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Configuration.rk1}>1 RK</SelectItem>
+                    <SelectItem value={Configuration.bhk1}>1 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk1_5}>1.5 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk2}>2 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk2_5}>2.5 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk3}>3 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk3_5}>3.5 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk4}>4 BHK</SelectItem>
+                    <SelectItem value={Configuration.bhk5}>5 BHK</SelectItem>
+                    <SelectItem value={Configuration.jodiFlat}>Jodi Flat</SelectItem>
+                    <SelectItem value={Configuration.duplex}>Duplex</SelectItem>
+                    <SelectItem value={Configuration.penthouse}>Penthouse</SelectItem>
+                    <SelectItem value={Configuration.bungalow}>Bungalow</SelectItem>
+                    <SelectItem value={Configuration.independentHouse}>Independent House</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-furnishing">Furnishing</Label>
+                <Select value={formData.furnishing} onValueChange={(value) => setFormData({ ...formData, furnishing: value as Furnishing })}>
+                  <SelectTrigger id="edit-furnishing">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Furnishing.unfurnished}>Unfurnished</SelectItem>
+                    <SelectItem value={Furnishing.semiFurnished}>Semi Furnished</SelectItem>
+                    <SelectItem value={Furnishing.furnished}>Furnished</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-status">Status</Label>
+              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as Status })}>
+                <SelectTrigger id="edit-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={Status.available}>Available</SelectItem>
+                  <SelectItem value={Status.sold}>Sold</SelectItem>
+                  <SelectItem value={Status.rented}>Rented</SelectItem>
+                  <SelectItem value={Status.underContract}>Under Contract</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-images">Property Images</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="edit-images"
+                  type="file"
+                  accept="image/jpeg,image/png,image/jpg"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="cursor-pointer"
+                />
+                <Button type="button" variant="outline" size="icon" onClick={() => document.getElementById('edit-images')?.click()}>
+                  <Upload className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Upload JPG or PNG images (max 10 MB each)
+              </p>
+              {uploadError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{uploadError}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            {imagePreviews.length > 0 && (
+              <div className="space-y-2">
+                <Label>Image Previews ({imagePreviews.length})</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={preview.url}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-24 object-cover rounded border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => removeImagePreview(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      {uploadProgress[preview.file.name] !== undefined && uploadProgress[preview.file.name] < 100 && (
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200">
+                          <div
+                            className="h-full bg-primary transition-all"
+                            style={{ width: `${uploadProgress[preview.file.name]}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowEditDialog(false); setSelectedProperty(null); resetForm(); }}>
               Cancel

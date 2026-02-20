@@ -1,77 +1,76 @@
 {
   "kind": "build_request",
-  "title": "Fix Google Maps Places Autocomplete selection to update input and pinpoint marker",
+  "title": "Revert to Version 54",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-6",
-      "text": "Fix the Google Maps Places Autocomplete selection flow in `frontend/src/components/PropertyMap.tsx` so that when a user clicks a suggestion: (1) the search input value updates to the selected place text, and (2) the map re-centers and the location marker moves/pinpoints to the selected place coordinates.",
-      "target": "frontend",
+      "id": "REQ-1",
+      "text": "Restore the codebase to the exact state of Version 54, removing all features and changes introduced in versions 55-59",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-9"
-        ],
-        "quotes": [
-          "Apply to fix now"
+          "msg-user-revert"
         ]
       },
       "acceptanceCriteria": [
-        "Typing in the map search input shows Places Autocomplete suggestions (no regression).",
-        "Clicking a suggestion updates the search input value to the selected place (e.g., `place.formatted_address` or `place.name`).",
-        "After clicking a suggestion, the map center updates to the selected place coordinates.",
-        "After clicking a suggestion, the visible marker that represents the selected location moves to the selected place coordinates.",
-        "No console errors occur during selection, and selection works consistently across repeated selections without requiring a page refresh."
+        "All files match the Version 54 snapshot",
+        "Features added after Version 54 are completely removed",
+        "Application functions identically to Version 54"
       ]
     },
     {
-      "id": "REQ-7",
-      "text": "Ensure the existing `onPlaceSelected` callback is invoked reliably after a Places Autocomplete suggestion is selected, and that it includes best-effort parsed address fields (city, suburb, area, roadName) plus coordinates, so `frontend/src/pages/PropertiesPage.tsx` continues to update the property form fields and coordinates from map selection.",
+      "id": "REQ-2",
+      "text": "Remove the StableDialogContent component and all its usages, reverting dialogs to standard DialogContent from Radix UI",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6",
-          "msg-7"
-        ],
-        "quotes": [
-          "Location suggestion appears but while clicking the desire Location it doesn't pin point the location selected",
-          "No"
+          "msg-user-revert"
         ]
       },
       "acceptanceCriteria": [
-        "When a suggestion is selected, `onPlaceSelected` is called exactly once per selection with `{ city, suburb, area, roadName, coords }`.",
-        "In Properties Add/Edit flows, selecting a suggestion updates the form fields (city, suburb, area, roadName) and coordinates in the UI to match the selected place.",
-        "If a selected place is missing some address components, the callback still fires with empty-string values for missing fields (not `undefined`), and coordinates are still set."
+        "frontend/src/components/StableDialogContent.tsx is deleted",
+        "All dialog implementations use standard Radix DialogContent",
+        "No references to StableDialogContent remain in the codebase"
       ]
     },
     {
-      "id": "REQ-8",
-      "text": "Add regression-proofing for the Autocomplete event wiring in `frontend/src/components/PropertyMap.tsx` to prevent “suggestions appear but click does nothing” issues after retries/navigation: ensure the Autocomplete instance is bound to the correct input element, and that the `place_changed` listener is registered exactly once and properly cleaned up on unmount/re-init.",
+      "id": "REQ-3",
+      "text": "Remove mobile keyboard focus handling features from property and inquiry forms",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6",
-          "msg-7"
-        ],
-        "quotes": [
-          "Location suggestion appears but while clicking the desire Location it doesn't pin point the location selected",
-          "2"
+          "msg-user-revert"
         ]
       },
       "acceptanceCriteria": [
-        "The Autocomplete `place_changed` handler fires when selecting a suggestion via mouse click.",
-        "The handler continues to work after toggling between pages/views that mount/unmount the map (no stale listeners).",
-        "There is no accumulation of listeners across retries (validated by consistent single handler execution per selection)."
+        "Dialog forms behave as they did in Version 54",
+        "No special mobile keyboard focus tracking is present",
+        "MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md is removed"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Remove DRAFT_STATE.md documentation file that describes the Version 54 revert",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-user-revert"
+        ]
+      },
+      "acceptanceCriteria": [
+        "frontend/DRAFT_STATE.md is deleted from the project"
       ]
     }
   ],
   "constraints": [
-    "Do not edit any files under `frontend/src/components/ui` (read-only shadcn components).",
-    "Do not modify immutable hook files: `frontend/src/hooks/useInternetIdentity.ts`, `frontend/src/hooks/useInternetIdentity.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`.",
-    "Keep all user-facing text in English."
+    "Must preserve all data and backend state",
+    "Must maintain authentication and user session continuity",
+    "Must not break existing deployments or canister state"
   ],
   "nonGoals": [
-    "Adding new map features beyond fixing selection (e.g., new layers, new filters, new clustering behavior).",
-    "Changing backend schema or adding backend endpoints for maps/autocomplete (this is a frontend Google Maps issue)."
+    "Adding new features beyond Version 54 state",
+    "Improving or refactoring Version 54 code",
+    "Maintaining any features introduced after Version 54"
   ],
   "imageRequirements": {
     "required": [],

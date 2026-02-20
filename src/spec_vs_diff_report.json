@@ -1,52 +1,43 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T19:02:45.786Z",
-  "summary": "The diff clearly adds a Google Places parsing utility and indicates updates to PropertyMap/PropertiesPage to improve Places Autocomplete selection handling. However, the provided truncated code for PropertyMap does not show the actual Autocomplete event wiring, listener cleanup, or the exact selection flow updates (input value update, map recenter, marker move, single-callback execution). Additionally, the diff summary text claims an Enter-to-geocode fallback behavior, which is outside the stated non-goals.",
+  "generatedAt": "2026-02-20T16:53:52.643Z",
+  "summary": "The diff shows modifications to several files but no removals. Key requirements for deleting StableDialogContent.tsx, DRAFT_STATE.md, and MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md are not implemented. The diff shows these files were modified rather than removed, contradicting the revert requirements.",
   "missing_requirements": [
     {
-      "id": "REQ-6",
-      "requirement": "When a user clicks a Places Autocomplete suggestion in frontend/src/components/PropertyMap.tsx: update the search input value to the selected place text, re-center the map, and move/pinpoint the selected-location marker to the selected coordinates.",
-      "reason": "PropertyMap.tsx is truncated before any Autocomplete selection handler logic is shown; the diff excerpt does not provide direct evidence that the input value is updated on selection, that the map is re-centered, or that the selected-location marker is moved as a result of clicking a suggestion.",
+      "id": "REQ-2",
+      "requirement": "Remove the StableDialogContent component and all its usages",
+      "reason": "StableDialogContent.tsx appears in modified files list but not in removed files. The requirement explicitly states this file should be deleted.",
       "evidence": [
-        "frontend/src/components/PropertyMap.tsx (truncated; only shows imports/state incl. searchValue)",
-        "frontend-file-summaries.txt (claims behavior, but not verifiable from the truncated code shown)"
+        "frontend/src/components/StableDialogContent.tsx"
       ]
     },
     {
-      "id": "REQ-7",
-      "requirement": "Ensure onPlaceSelected is invoked reliably exactly once per suggestion selection with { city, suburb, area, roadName, coords }, providing empty-string defaults for missing address fields, so PropertiesPage updates the form fields and coordinates.",
-      "reason": "While a new parse utility is added that returns empty-string defaults and coords, the truncated PropertyMap/PropertiesPage excerpts do not show the actual onPlaceSelected invocation path, nor evidence it fires exactly once per selection.",
+      "id": "REQ-3",
+      "requirement": "Remove mobile keyboard focus handling features and MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md",
+      "reason": "MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md appears in modified files list but not in removed files. The acceptance criteria explicitly require this file to be removed.",
       "evidence": [
-        "frontend/src/utils/googlePlaces.ts (parsePlaceResult provides empty-string defaults and coords)",
-        "frontend/src/components/PropertyMap.tsx (truncated; onPlaceSelected prop exists but invocation not shown)",
-        "frontend/src/pages/PropertiesPage.tsx (truncated; does not show handlePlaceSelected implementation)"
+        "frontend/MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md"
       ]
     },
     {
-      "id": "REQ-8",
-      "requirement": "Regression-proof Autocomplete event wiring in PropertyMap.tsx: bind Autocomplete to the correct input, register the place_changed listener exactly once, and properly clean it up on unmount/re-init (no stale/accumulated listeners).",
-      "reason": "The diff excerpt for PropertyMap.tsx does not include the Autocomplete initialization, listener registration, or cleanup code; therefore there is no direct evidence that the listener is registered exactly once and cleaned up.",
+      "id": "REQ-4",
+      "requirement": "Remove DRAFT_STATE.md documentation file",
+      "reason": "DRAFT_STATE.md appears in modified files list but not in removed files. The acceptance criteria explicitly state this file should be deleted from the project.",
       "evidence": [
-        "frontend/src/components/PropertyMap.tsx (truncated; refs include searchInputRef/autocompleteRef but wiring not shown)"
+        "frontend/DRAFT_STATE.md"
       ]
     }
   ],
-  "hallucinated_features": [
-    {
-      "description": "Enter-to-geocode fallback for the location search input (geocoding typed text when user presses Enter without selecting a suggestion).",
-      "reason": "This behavior is described in the diff summary but is explicitly outside the BuildRequest scope (non-goals: adding new map features beyond fixing selection).",
-      "evidence": [
-        "frontend-file-summaries.txt (PropertyMap description includes: \"includes Enter-to-geocode fallback\")"
-      ]
-    }
-  ],
-  "confidence": 0.46,
+  "hallucinated_features": [],
+  "confidence": 0.95,
   "changed_files": [
+    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/PropertyMap.tsx",
+    "frontend/DRAFT_STATE.md",
+    "frontend/MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md",
+    "frontend/src/components/StableDialogContent.tsx",
     "frontend/src/pages/PropertiesPage.tsx",
-    "frontend/src/utils/googlePlaces.ts",
     "project_state.json"
   ]
 }

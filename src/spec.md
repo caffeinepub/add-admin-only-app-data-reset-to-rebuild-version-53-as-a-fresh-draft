@@ -1,12 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Fix Google Maps Places Autocomplete selection so selecting a suggestion reliably updates the search input, recenters the map, moves the marker, and updates the property form via the existing callback.
+**Goal:** Revert the codebase to Version 54, removing all features and changes introduced in versions 55-59.
 
 **Planned changes:**
-- Update `frontend/src/components/PropertyMap.tsx` so selecting a Places Autocomplete suggestion sets the input value to the selected place text and re-centers the map to the selected coordinates.
-- Ensure the selected-location marker updates/moves to the selected place coordinates after each selection.
-- Make `onPlaceSelected` fire reliably exactly once per selection with `{ city, suburb, area, roadName, coords }`, using empty strings for missing address fields, so `frontend/src/pages/PropertiesPage.tsx` continues to populate form fields and coordinates.
-- Add regression-proof Autocomplete wiring: bind the Autocomplete instance to the correct input element, register the `place_changed` listener exactly once, and clean up properly on unmount/re-init to prevent “suggestions appear but click does nothing” issues and listener accumulation.
+- Restore all files to their exact Version 54 state
+- Remove StableDialogContent component and restore standard Radix UI DialogContent usage
+- Remove mobile keyboard focus handling features from property and inquiry forms
+- Delete DRAFT_STATE.md and MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md documentation files
 
-**User-visible outcome:** Users can click an autocomplete suggestion and immediately see the search input update, the map jump to the chosen location, the marker move to it, and the property form fields/coordinates update consistently across repeated selections and navigation without console errors.
+**User-visible outcome:** The application functions identically to Version 54, with all subsequent features removed. Dialog forms behave as they did in Version 54 without special mobile keyboard handling.

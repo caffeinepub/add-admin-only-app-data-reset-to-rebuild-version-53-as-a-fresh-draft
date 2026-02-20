@@ -1,88 +1,46 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 7,
+  "projectStateVersion": 3,
   "summary": "New project",
   "architectural_notes": [],
-  "known_issues": [
-    "Bug: Property location search/selection on Google Map is not working (cannot search and select property location).",
-    "Bug: Google Maps Places Autocomplete suggestions appear, but selecting a suggestion does not update the input value and does not move/pinpoint the map marker to the selected location."
-  ],
-  "isFixRequest": true,
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-add-a-frontend-admin-only-ui-control-to-trigger-the-backend-reset-with-a-clear-destructive-confirmation-flow-and-refresh-the-ui-state-after-completion",
-      "title": "Add a frontend admin-only UI control to trigger the backend reset with a clear destructive confirmation flow, and refresh the UI state after completion.",
+      "id": "feature-restore-the-codebase-to-the-exact-state-of-version-54-removing-all-features-and-changes-introduced-in-versions-55-59",
+      "title": "Restore the codebase to the exact state of Version 54, removing all features and changes introduced in versions 55-59",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-remove-the-stabledialogcontent-component-and-all-its-usages-reverting-dialogs-to-standard-dialogcontent-from-radix-ui",
+      "title": "Remove the StableDialogContent component and all its usages, reverting dialogs to standard DialogContent from Radix UI",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-fix-the-google-maps-property-location-search-so-that-typing-in-the-location-search-input-shows-places-autocomplete-suggestions-and-selecting-a-suggestion-reliably-updates-the-selected-coordinates-and-address-fields-city-suburb-area-roadname-via-the-existing-onplaceselected-callback",
-      "title": "Fix the Google Maps property location search so that typing in the location search input shows Places Autocomplete suggestions and selecting a suggestion reliably updates the selected coordinates and address fields (city/suburb/area/roadName) via the existing onPlaceSelected callback.",
+      "id": "feature-remove-mobile-keyboard-focus-handling-features-from-property-and-inquiry-forms",
+      "title": "Remove mobile keyboard focus handling features from property and inquiry forms",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-harden-the-propertymap-autocomplete-initialization-so-it-is-created-only-after-google-maps-places-are-loaded-and-the-search-input-ref-is-mounted-ensure-event-listeners-are-cleaned-up-on-unmount-to-prevent-broken-selection-after-navigation-or-retries",
-      "title": "Harden the PropertyMap autocomplete initialization so it is created only after Google Maps + Places are loaded and the search input ref is mounted; ensure event listeners are cleaned up on unmount to prevent broken selection after navigation or retries.",
+      "id": "feature-remove-draft-state-md-documentation-file-that-describes-the-version-54-revert",
+      "title": "Remove DRAFT_STATE.md documentation file that describes the Version 54 revert",
       "reqIds": [
         "REQ-4"
       ],
       "version": 1
-    },
-    {
-      "id": "feature-add-a-fallback-behavior-for-location-search-when-the-user-presses-enter-in-the-search-input-without-selecting-a-suggestion-attempt-geocoding-the-typed-text-and-if-successful-update-the-map-center-marker-and-call-onplaceselected-with-best-effort-parsed-address-components",
-      "title": "Add a fallback behavior for location search: when the user presses Enter in the search input without selecting a suggestion, attempt geocoding the typed text and, if successful, update the map center/marker and call onPlaceSelected with best-effort parsed address components.",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-fix-the-google-maps-places-autocomplete-selection-flow-in-frontend-src-components-propertymap-tsx-so-that-when-a-user-clicks-a-suggestion-1-the-search-input-value-updates-to-the-selected-place-text-and-2-the-map-re-centers-and-the-location-marker-moves-pinpoints-to-the-selected-place-coordinates",
-      "title": "Fix the Google Maps Places Autocomplete selection flow in `frontend/src/components/PropertyMap.tsx` so that when a user clicks a suggestion: (1) the search input value updates to the selected place text, and (2) the map re-centers and the location marker moves/pinpoints to the selected place coordinates.",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-the-existing-onplaceselected-callback-is-invoked-reliably-after-a-places-autocomplete-suggestion-is-selected-and-that-it-includes-best-effort-parsed-address-fields-city-suburb-area-roadname-plus-coordinates-so-frontend-src-pages-propertiespage-tsx-continues-to-update-the-property-form-fields-and-coordinates-from-map-selection",
-      "title": "Ensure the existing `onPlaceSelected` callback is invoked reliably after a Places Autocomplete suggestion is selected, and that it includes best-effort parsed address fields (city, suburb, area, roadName) plus coordinates, so `frontend/src/pages/PropertiesPage.tsx` continues to update the property form fields and coordinates from map selection.",
-      "reqIds": [
-        "REQ-7"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-regression-proofing-for-the-autocomplete-event-wiring-in-frontend-src-components-propertymap-tsx-to-prevent-suggestions-appear-but-click-does-nothing-issues-after-retries-navigation-ensure-the-autocomplete-instance-is-bound-to-the-correct-input-element-and-that-the-place-changed-listener-is-registered-exactly-once-and-properly-cleaned-up-on-unmount-re-init",
-      "title": "Add regression-proofing for the Autocomplete event wiring in `frontend/src/components/PropertyMap.tsx` to prevent “suggestions appear but click does nothing” issues after retries/navigation: ensure the Autocomplete instance is bound to the correct input element, and that the `place_changed` listener is registered exactly once and properly cleaned up on unmount/re-init.",
-      "reqIds": [
-        "REQ-8"
-      ],
-      "version": 1
     }
   ],
-  "new_feature_requests": [
-    {
-      "id": "AR-1",
-      "summary": "Reset/Rebuild Version 53 from scratch as a fresh draft",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Implement an admin-only backend method to reset the application to a fresh-draft state by clearing all persisted domain data (agents, properties, inquiries, and user profiles).",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "status": "pending"
-    }
-  ],
-  "projectName": "Add admin-only app data reset to rebuild Version 53 as a fresh draft",
+  "new_feature_requests": [],
+  "projectName": "Revert to Version 54",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

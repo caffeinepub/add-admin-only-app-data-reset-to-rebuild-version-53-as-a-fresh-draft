@@ -1,62 +1,90 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T19:02:45.788Z",
+  "generatedAt": "2026-02-20T16:53:52.646Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
-        "id": "REQ-6",
-        "summary": "Fix the Google Maps Places Autocomplete selection flow in `frontend/src/components/PropertyMap.tsx` so that when a user clicks a suggestion: (1) the search input value updates to the selected place text, and (2) the map re-centers and the location marker moves/pinpoints to the selected place coordinates.",
+        "id": "REQ-1",
+        "summary": "Restore the codebase to the exact state of Version 54, removing all features and changes introduced in versions 55-59",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/PropertyMap.tsx"
+          "frontend/DRAFT_STATE.md",
+          "frontend/MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md",
+          "frontend/src/components/StableDialogContent.tsx",
+          "frontend/src/pages/PropertiesPage.tsx",
+          "frontend/src/pages/InquiriesPage.tsx",
+          "frontend/src/pages/AgentsPage.tsx",
+          "frontend/src/components/AgentForm.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/PropertyMap.tsx"
-        ]
-      },
-      {
-        "id": "REQ-7",
-        "summary": "Ensure the existing `onPlaceSelected` callback is invoked reliably after a Places Autocomplete suggestion is selected, and that it includes best-effort parsed address fields (city, suburb, area, roadName) plus coordinates, so `frontend/src/pages/PropertiesPage.tsx` continues to update the property form fields and coordinates from map selection.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/utils/googlePlaces.ts",
-          "frontend/src/components/PropertyMap.tsx",
-          "frontend/src/pages/PropertiesPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/utils/googlePlaces.ts",
-          "frontend/src/components/PropertyMap.tsx",
+          "frontend/DRAFT_STATE.md",
+          "frontend/MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md",
+          "frontend/src/components/StableDialogContent.tsx",
           "frontend/src/pages/PropertiesPage.tsx"
         ]
       },
       {
-        "id": "REQ-8",
-        "summary": "Add regression-proofing for the Autocomplete event wiring in `frontend/src/components/PropertyMap.tsx` to prevent “suggestions appear but click does nothing” issues after retries/navigation: ensure the Autocomplete instance is bound to the correct input element, and that the `place_changed` listener is registered exactly once and properly cleaned up on unmount/re-init.",
+        "id": "REQ-2",
+        "summary": "Remove the StableDialogContent component and all its usages, reverting dialogs to standard DialogContent from Radix UI",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/PropertyMap.tsx"
+          "frontend/src/components/StableDialogContent.tsx",
+          "frontend/src/pages/PropertiesPage.tsx",
+          "frontend/src/pages/InquiriesPage.tsx",
+          "frontend/src/pages/AgentsPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/PropertyMap.tsx"
+          "frontend/src/components/StableDialogContent.tsx",
+          "frontend/src/pages/PropertiesPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Remove mobile keyboard focus handling features from property and inquiry forms",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md",
+          "frontend/src/pages/PropertiesPage.tsx",
+          "frontend/src/pages/InquiriesPage.tsx",
+          "frontend/src/components/AgentForm.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md",
+          "frontend/src/pages/PropertiesPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Remove DRAFT_STATE.md documentation file that describes the Version 54 revert",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/DRAFT_STATE.md"
+        ],
+        "matchedFiles": [
+          "frontend/DRAFT_STATE.md"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
     "build-request.json",
+    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/PropertyMap.tsx",
+    "frontend/DRAFT_STATE.md",
+    "frontend/MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md",
+    "frontend/src/components/StableDialogContent.tsx",
+    "frontend/src/config.ts",
     "frontend/src/pages/PropertiesPage.tsx",
-    "frontend/src/utils/googlePlaces.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

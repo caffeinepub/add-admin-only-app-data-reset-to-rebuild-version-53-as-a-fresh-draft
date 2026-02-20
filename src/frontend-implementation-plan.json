@@ -1,65 +1,127 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix Places Autocomplete selection to update search input, map center, marker, and callback reliability",
+  "title": "Revert to Version 54",
   "requirements": [
     {
-      "id": "REQ-6",
-      "summary": "Update PropertyMap Places Autocomplete selection to set the input text and move/recenter the map and marker to the selected place coordinates.",
+      "id": "REQ-1",
+      "summary": "Restore the codebase to the exact state of Version 54, removing all features and changes introduced in versions 55-59",
       "acceptanceCriteria": [
-        "Typing in the map search input shows Places Autocomplete suggestions (no regression).",
-        "Clicking a suggestion updates the search input value to the selected place (e.g., `place.formatted_address` or `place.name`).",
-        "After clicking a suggestion, the map center updates to the selected place coordinates.",
-        "After clicking a suggestion, the visible marker that represents the selected location moves to the selected place coordinates.",
-        "No console errors occur during selection, and selection works consistently across repeated selections without requiring a page refresh."
+        "All files match the Version 54 snapshot",
+        "Features added after Version 54 are completely removed",
+        "Application functions identically to Version 54"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/PropertyMap.tsx",
-          "operation": "modify",
-          "description": "In the Places Autocomplete `place_changed` flow, ensure the selected place text is applied to the controlled `searchValue` state (and, if necessary, also written to the underlying input element) so the visible search input updates immediately. After selection, read best-available place coordinates (from geometry) and re-center the map (pan/fit/zoom as appropriate) and move/update the existing selected-location marker (the draggable marker if present, otherwise the dedicated selection marker) to the new coordinates. Add defensive checks to avoid console errors when place geometry is missing, while keeping suggestions working."
-        }
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "summary": "Ensure onPlaceSelected fires exactly once per suggestion selection with best-effort parsed address fields and coordinates so PropertiesPage updates its form reliably.",
-      "acceptanceCriteria": [
-        "When a suggestion is selected, `onPlaceSelected` is called exactly once per selection with `{ city, suburb, area, roadName, coords }`.",
-        "In Properties Add/Edit flows, selecting a suggestion updates the form fields (city, suburb, area, roadName) and coordinates in the UI to match the selected place.",
-        "If a selected place is missing some address components, the callback still fires with empty-string values for missing fields (not `undefined`), and coordinates are still set."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/utils/googlePlaces.ts",
-          "operation": "create",
-          "description": "Add a small utility to parse a Google Places `PlaceResult` into `{ city, suburb, area, roadName }` using best-effort matching on address components and falling back to empty strings for missing values; also include a helper to extract `{ lat, lng }` coordinates when available."
+          "path": "frontend/DRAFT_STATE.md",
+          "operation": "delete",
+          "description": "Remove the documentation file describing the Version 54 revert as it is no longer needed"
         },
         {
-          "path": "frontend/src/components/PropertyMap.tsx",
-          "operation": "modify",
-          "description": "Use the new `googlePlaces` parsing utility when handling `place_changed` to build a normalized payload with empty-string defaults and extracted coordinates. Invoke the existing `onPlaceSelected` callback exactly once per selection (e.g., by using a single handler function and guarding against double-firing), and ensure the callback receives `{ city, suburb, area, roadName, coords }` every time a valid selection provides coordinates."
+          "path": "frontend/MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md",
+          "operation": "delete",
+          "description": "Remove the mobile keyboard focus QA checklist that was added after Version 54"
+        },
+        {
+          "path": "frontend/src/components/StableDialogContent.tsx",
+          "operation": "delete",
+          "description": "Remove the StableDialogContent component that was added after Version 54 for mobile keyboard focus handling"
         },
         {
           "path": "frontend/src/pages/PropertiesPage.tsx",
           "operation": "modify",
-          "description": "Make the `handlePlaceSelected` handler stable and defensive (e.g., memoize and coerce any potentially missing string fields to `''`) so Add/Edit flows consistently update the form fields and coordinates in the UI from the map selection without unintended re-renders impacting map wiring."
+          "description": "Revert dialog implementations to use standard Radix DialogContent instead of StableDialogContent. Remove any mobile keyboard focus handling code and restore the Version 54 form behavior"
+        },
+        {
+          "path": "frontend/src/pages/InquiriesPage.tsx",
+          "operation": "modify",
+          "description": "Revert dialog implementations to use standard Radix DialogContent instead of StableDialogContent. Remove any mobile keyboard focus handling code and restore the Version 54 form behavior"
+        },
+        {
+          "path": "frontend/src/pages/AgentsPage.tsx",
+          "operation": "modify",
+          "description": "Revert dialog implementations to use standard Radix DialogContent instead of StableDialogContent if StableDialogContent is used. Remove any mobile keyboard focus handling code and restore the Version 54 form behavior"
+        },
+        {
+          "path": "frontend/src/components/AgentForm.tsx",
+          "operation": "modify",
+          "description": "Remove any mobile keyboard focus handling features added after Version 54 and restore original form behavior"
         }
       ]
     },
     {
-      "id": "REQ-8",
-      "summary": "Harden Autocomplete instance and listener lifecycle to prevent 'suggestions appear but click does nothing' after retries/navigation by binding to the correct input and registering exactly one cleaned-up listener.",
+      "id": "REQ-2",
+      "summary": "Remove the StableDialogContent component and all its usages, reverting dialogs to standard DialogContent from Radix UI",
       "acceptanceCriteria": [
-        "The Autocomplete `place_changed` handler fires when selecting a suggestion via mouse click.",
-        "The handler continues to work after toggling between pages/views that mount/unmount the map (no stale listeners).",
-        "There is no accumulation of listeners across retries (validated by consistent single handler execution per selection)."
+        "frontend/src/components/StableDialogContent.tsx is deleted",
+        "All dialog implementations use standard Radix DialogContent",
+        "No references to StableDialogContent remain in the codebase"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/PropertyMap.tsx",
+          "path": "frontend/src/components/StableDialogContent.tsx",
+          "operation": "delete",
+          "description": "Delete the StableDialogContent component file completely"
+        },
+        {
+          "path": "frontend/src/pages/PropertiesPage.tsx",
           "operation": "modify",
-          "description": "Refactor the Autocomplete setup effect to (1) always bind the Autocomplete instance to the current `searchInputRef` element, (2) register the `place_changed` listener exactly once, and (3) reliably clean up on unmount/re-init by removing the listener and clearing any stored Autocomplete instance refs. Ensure the effect dependencies do not cause repeated listener registration on state changes (like `searchValue`) while still recovering correctly after script retries/navigation."
+          "description": "Replace all StableDialogContent imports and usages with standard DialogContent from @radix-ui/react-dialog or shadcn Dialog component. Update property add/edit dialogs to use DialogContent without custom focus handling"
+        },
+        {
+          "path": "frontend/src/pages/InquiriesPage.tsx",
+          "operation": "modify",
+          "description": "Replace all StableDialogContent imports and usages with standard DialogContent from @radix-ui/react-dialog or shadcn Dialog component. Update inquiry add/edit dialogs to use DialogContent without custom focus handling"
+        },
+        {
+          "path": "frontend/src/pages/AgentsPage.tsx",
+          "operation": "modify",
+          "description": "Replace all StableDialogContent imports and usages with standard DialogContent from @radix-ui/react-dialog or shadcn Dialog component if present. Update agent add/edit dialogs to use DialogContent without custom focus handling"
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Remove mobile keyboard focus handling features from property and inquiry forms",
+      "acceptanceCriteria": [
+        "Dialog forms behave as they did in Version 54",
+        "No special mobile keyboard focus tracking is present",
+        "MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md is removed"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/MOBILE_KEYBOARD_FOCUS_QA_CHECKLIST.md",
+          "operation": "delete",
+          "description": "Remove the QA checklist documentation for mobile keyboard focus handling"
+        },
+        {
+          "path": "frontend/src/pages/PropertiesPage.tsx",
+          "operation": "modify",
+          "description": "Remove any special mobile keyboard focus tracking state, handlers, or effects from property forms. Restore forms to their Version 54 state without focus prevention logic"
+        },
+        {
+          "path": "frontend/src/pages/InquiriesPage.tsx",
+          "operation": "modify",
+          "description": "Remove any special mobile keyboard focus tracking state, handlers, or effects from inquiry forms. Restore forms to their Version 54 state without focus prevention logic"
+        },
+        {
+          "path": "frontend/src/components/AgentForm.tsx",
+          "operation": "modify",
+          "description": "Remove any special mobile keyboard focus tracking state, handlers, or effects from agent forms. Restore forms to their Version 54 state without focus prevention logic"
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Remove DRAFT_STATE.md documentation file that describes the Version 54 revert",
+      "acceptanceCriteria": [
+        "frontend/DRAFT_STATE.md is deleted from the project"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/DRAFT_STATE.md",
+          "operation": "delete",
+          "description": "Delete the DRAFT_STATE.md documentation file from the frontend directory"
         }
       ]
     }

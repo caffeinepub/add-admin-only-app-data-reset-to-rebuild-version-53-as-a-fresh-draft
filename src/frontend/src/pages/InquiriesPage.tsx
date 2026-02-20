@@ -326,48 +326,35 @@ export default function InquiriesPage() {
       </Card>
 
       {/* Add Inquiry Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={(open) => { setShowAddDialog(open); if (!open) resetForm(); }}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Inquiry</DialogTitle>
-            <DialogDescription>Record a new customer inquiry. All fields marked with * are required.</DialogDescription>
+            <DialogDescription>Create a new customer inquiry for a property</DialogDescription>
           </DialogHeader>
+          
           <div className="space-y-4 py-4">
             {Object.keys(validationErrors).length > 0 && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Please correct the errors below before submitting.
+                  Please correct the errors below before submitting
                 </AlertDescription>
               </Alert>
             )}
-            
+
             <div className="space-y-2">
-              <Label htmlFor="add-property" className="text-sm font-medium">
-                Property <span className="text-destructive">*</span>
-              </Label>
-              <Select 
-                value={formData.propertyId} 
-                onValueChange={(value) => {
-                  setFormData({ ...formData, propertyId: value });
-                  setValidationErrors({ ...validationErrors, propertyId: '' });
-                }}
-              >
+              <Label htmlFor="add-property">Property <span className="text-destructive">*</span></Label>
+              <Select value={formData.propertyId} onValueChange={(value) => setFormData({ ...formData, propertyId: value })}>
                 <SelectTrigger id="add-property" className={validationErrors.propertyId ? 'border-destructive' : ''}>
                   <SelectValue placeholder="Select a property" />
                 </SelectTrigger>
                 <SelectContent>
-                  {properties.length === 0 ? (
-                    <div className="px-2 py-4 text-sm text-muted-foreground text-center">
-                      No properties available
-                    </div>
-                  ) : (
-                    properties.map((property) => (
-                      <SelectItem key={property.id} value={property.id}>
-                        {property.title}
-                      </SelectItem>
-                    ))
-                  )}
+                  {properties.map((property) => (
+                    <SelectItem key={property.id} value={property.id}>
+                      {property.title}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {validationErrors.propertyId && (
@@ -376,17 +363,12 @@ export default function InquiriesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="add-customer" className="text-sm font-medium">
-                Customer Name <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="add-customer-name">Customer Name <span className="text-destructive">*</span></Label>
               <Input
-                id="add-customer"
+                id="add-customer-name"
                 value={formData.customerName}
-                onChange={(e) => {
-                  setFormData({ ...formData, customerName: e.target.value });
-                  setValidationErrors({ ...validationErrors, customerName: '' });
-                }}
-                placeholder="Enter customer's full name"
+                onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                placeholder="Enter customer name"
                 className={validationErrors.customerName ? 'border-destructive' : ''}
               />
               {validationErrors.customerName && (
@@ -395,16 +377,11 @@ export default function InquiriesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="add-contact" className="text-sm font-medium">
-                Contact Information <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="add-contact-info">Contact Information <span className="text-destructive">*</span></Label>
               <Input
-                id="add-contact"
+                id="add-contact-info"
                 value={formData.contactInfo}
-                onChange={(e) => {
-                  setFormData({ ...formData, contactInfo: e.target.value });
-                  setValidationErrors({ ...validationErrors, contactInfo: '' });
-                }}
+                onChange={(e) => setFormData({ ...formData, contactInfo: e.target.value })}
                 placeholder="Email or phone number"
                 className={validationErrors.contactInfo ? 'border-destructive' : ''}
               />
@@ -414,9 +391,7 @@ export default function InquiriesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="add-source" className="text-sm font-medium">
-                Inquiry Source <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="add-source">Source</Label>
               <Select value={formData.source} onValueChange={(value) => setFormData({ ...formData, source: value as Source })}>
                 <SelectTrigger id="add-source">
                   <SelectValue />
@@ -432,15 +407,12 @@ export default function InquiriesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="add-agent" className="text-sm font-medium">
-                Assign to Agent
-              </Label>
+              <Label htmlFor="add-assigned-agent">Assigned Agent (Optional)</Label>
               <Select value={formData.assignedAgent} onValueChange={(value) => setFormData({ ...formData, assignedAgent: value })}>
-                <SelectTrigger id="add-agent">
-                  <SelectValue placeholder="Assign to me (default)" />
+                <SelectTrigger id="add-assigned-agent">
+                  <SelectValue placeholder="Assign to yourself by default" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Assign to me (default)</SelectItem>
                   {agents.filter(a => a.active).map((agent) => (
                     <SelectItem key={agent.id.toString()} value={agent.id.toString()}>
                       {agent.name}
@@ -448,24 +420,16 @@ export default function InquiriesPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                If no agent is selected, the inquiry will be assigned to you
-              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="add-notes" className="text-sm font-medium">
-                Notes <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="add-notes">Notes <span className="text-destructive">*</span></Label>
               <Textarea
                 id="add-notes"
                 value={formData.notes}
-                onChange={(e) => {
-                  setFormData({ ...formData, notes: e.target.value });
-                  setValidationErrors({ ...validationErrors, notes: '' });
-                }}
-                placeholder="Add any additional notes about this inquiry"
-                rows={3}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Enter inquiry notes and details"
+                rows={4}
                 className={validationErrors.notes ? 'border-destructive' : ''}
               />
               {validationErrors.notes && (
@@ -473,14 +437,12 @@ export default function InquiriesPage() {
               )}
             </div>
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowAddDialog(false)} disabled={addInquiry.isPending}>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowAddDialog(false); resetForm(); }}>
               Cancel
             </Button>
-            <Button
-              onClick={handleAdd}
-              disabled={addInquiry.isPending}
-            >
+            <Button onClick={handleAdd} disabled={addInquiry.isPending}>
               {addInquiry.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Add Inquiry
             </Button>
@@ -489,34 +451,30 @@ export default function InquiriesPage() {
       </Dialog>
 
       {/* Edit Inquiry Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={(open) => { setShowEditDialog(open); if (!open) { setSelectedInquiry(null); resetForm(); } }}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Update Inquiry</DialogTitle>
-            <DialogDescription>Update inquiry details and status. All fields marked with * are required.</DialogDescription>
+            <DialogTitle>Edit Inquiry</DialogTitle>
+            <DialogDescription>Update inquiry details and status</DialogDescription>
           </DialogHeader>
+          
           <div className="space-y-4 py-4">
             {Object.keys(validationErrors).length > 0 && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Please correct the errors below before submitting.
+                  Please correct the errors below before submitting
                 </AlertDescription>
               </Alert>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="edit-customer" className="text-sm font-medium">
-                Customer Name <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="edit-customer-name">Customer Name <span className="text-destructive">*</span></Label>
               <Input
-                id="edit-customer"
+                id="edit-customer-name"
                 value={formData.customerName}
-                onChange={(e) => {
-                  setFormData({ ...formData, customerName: e.target.value });
-                  setValidationErrors({ ...validationErrors, customerName: '' });
-                }}
-                placeholder="Enter customer's full name"
+                onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                placeholder="Enter customer name"
                 className={validationErrors.customerName ? 'border-destructive' : ''}
               />
               {validationErrors.customerName && (
@@ -525,16 +483,11 @@ export default function InquiriesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-contact" className="text-sm font-medium">
-                Contact Information <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="edit-contact-info">Contact Information <span className="text-destructive">*</span></Label>
               <Input
-                id="edit-contact"
+                id="edit-contact-info"
                 value={formData.contactInfo}
-                onChange={(e) => {
-                  setFormData({ ...formData, contactInfo: e.target.value });
-                  setValidationErrors({ ...validationErrors, contactInfo: '' });
-                }}
+                onChange={(e) => setFormData({ ...formData, contactInfo: e.target.value })}
                 placeholder="Email or phone number"
                 className={validationErrors.contactInfo ? 'border-destructive' : ''}
               />
@@ -544,9 +497,7 @@ export default function InquiriesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-source" className="text-sm font-medium">
-                Inquiry Source <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="edit-source">Source</Label>
               <Select value={formData.source} onValueChange={(value) => setFormData({ ...formData, source: value as Source })}>
                 <SelectTrigger id="edit-source">
                   <SelectValue />
@@ -562,17 +513,24 @@ export default function InquiriesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-agent" className="text-sm font-medium">
-                Assigned Agent <span className="text-destructive">*</span>
-              </Label>
-              <Select 
-                value={formData.assignedAgent} 
-                onValueChange={(value) => {
-                  setFormData({ ...formData, assignedAgent: value });
-                  setValidationErrors({ ...validationErrors, assignedAgent: '' });
-                }}
-              >
-                <SelectTrigger id="edit-agent" className={validationErrors.assignedAgent ? 'border-destructive' : ''}>
+              <Label htmlFor="edit-status">Status</Label>
+              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as Status__1 })}>
+                <SelectTrigger id="edit-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={Status__1.new_}>New</SelectItem>
+                  <SelectItem value={Status__1.inProgress}>In Progress</SelectItem>
+                  <SelectItem value={Status__1.followUp}>Follow Up</SelectItem>
+                  <SelectItem value={Status__1.closed}>Closed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-assigned-agent">Assigned Agent <span className="text-destructive">*</span></Label>
+              <Select value={formData.assignedAgent} onValueChange={(value) => setFormData({ ...formData, assignedAgent: value })}>
+                <SelectTrigger id="edit-assigned-agent" className={validationErrors.assignedAgent ? 'border-destructive' : ''}>
                   <SelectValue placeholder="Select an agent" />
                 </SelectTrigger>
                 <SelectContent>
@@ -589,34 +547,12 @@ export default function InquiriesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-status" className="text-sm font-medium">
-                Status <span className="text-destructive">*</span>
-              </Label>
-              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as Status__1 })}>
-                <SelectTrigger id="edit-status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={Status__1.new_}>New</SelectItem>
-                  <SelectItem value={Status__1.inProgress}>In Progress</SelectItem>
-                  <SelectItem value={Status__1.followUp}>Follow Up</SelectItem>
-                  <SelectItem value={Status__1.closed}>Closed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-notes" className="text-sm font-medium">
-                Notes <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="edit-notes">Notes <span className="text-destructive">*</span></Label>
               <Textarea
                 id="edit-notes"
                 value={formData.notes}
-                onChange={(e) => {
-                  setFormData({ ...formData, notes: e.target.value });
-                  setValidationErrors({ ...validationErrors, notes: '' });
-                }}
-                placeholder="Add notes about this inquiry"
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Enter inquiry notes and details"
                 rows={4}
                 className={validationErrors.notes ? 'border-destructive' : ''}
               />
@@ -625,14 +561,12 @@ export default function InquiriesPage() {
               )}
             </div>
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowEditDialog(false)} disabled={updateInquiry.isPending}>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowEditDialog(false); setSelectedInquiry(null); resetForm(); }}>
               Cancel
             </Button>
-            <Button 
-              onClick={handleEdit} 
-              disabled={updateInquiry.isPending}
-            >
+            <Button onClick={handleEdit} disabled={updateInquiry.isPending}>
               {updateInquiry.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Update Inquiry
             </Button>

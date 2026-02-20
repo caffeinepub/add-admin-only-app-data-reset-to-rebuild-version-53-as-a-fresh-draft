@@ -17,7 +17,6 @@ import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
 import OutCall "http-outcalls/outcall";
 
-
 // Apply migration with-clause to main actor
 
 actor {
@@ -1508,3 +1507,4 @@ actor {
     userProfiles := Map.empty<Principal, UserProfile>();
   };
 };
+
